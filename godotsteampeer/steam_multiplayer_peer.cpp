@@ -1,10 +1,16 @@
 #include <godot_cpp/core/class_db.hpp>
 
 #include "steam_multiplayer_peer.h"
+#include "godotsteam/public/godotsteam.h"
 
 using namespace godot;
 
-godot::SteamMultiplayerPeer::SteamMultiplayerPeer() {}
+godot::SteamMultiplayerPeer::SteamMultiplayerPeer() {
+
+    if(SteamUser() != NULL)
+        ERR_PRINT("MEU ERRO");
+
+}
 
 godot::SteamMultiplayerPeer::~SteamMultiplayerPeer() {}
 
