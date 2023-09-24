@@ -1,14 +1,19 @@
 #include <godot_cpp/core/class_db.hpp>
 
 #include "steam_multiplayer_peer.h"
-#include "godotsteam/public/godotsteam.h"
+// #include "steam/steam_api.h"
 
 using namespace godot;
 
 godot::SteamMultiplayerPeer::SteamMultiplayerPeer() {
 
-    if(SteamUser() != NULL)
-        ERR_PRINT("MEU ERRO");
+    // int ok = Steam.AuthSessionResponse.k_EBroadcastUploadResultNone;
+    // if(SteamUser() != NULL)
+    //     ERR_PRINT("dasdsa");
+
+    // SteamAPICall_t api_call = SteamMatchmaking()->CreateLobby(ELobbyType::k_ELobbyTypePrivate, 12);
+
+    // Steam::get_singleton()->steamworksError("ERROR: SteamMultiplayerPeer::_disconnect_peer not yet implemented");
 
 }
 

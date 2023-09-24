@@ -6,13 +6,11 @@ env = SConscript("godot-cpp/SConstruct")
 
 # Local dependency paths, adapt them to your setup
 steam_lib_path = "godotsteampeer/sdk/redistributable_bin"
-godotsteam_lib_path = "godotsteampeer/godotsteam/bin"
 
 # Check our platform specifics
 if env['platform'] in ('macos', 'osx'):
     # Set the correct Steam library
     steam_lib_path += "/osx"
-    godotsteam_lib_path
     steamworks_library = 'libsteam_api.dylib'
 
 elif env['platform'] in ('linuxbsd', 'linux'):
