@@ -4,9 +4,13 @@
 
 using namespace godot;
 
-Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size)
-{
-    return Error();
+godot::SteamMultiplayerPeer::SteamMultiplayerPeer() {}
+
+godot::SteamMultiplayerPeer::~SteamMultiplayerPeer() {}
+
+Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer,
+                                        int32_t *r_buffer_size) {
+  return Error();
 }
 
 Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffer_size)

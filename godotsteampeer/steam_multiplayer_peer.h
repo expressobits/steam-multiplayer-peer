@@ -5,7 +5,7 @@
 
 namespace godot {
 
-class SteamMultiplayerPeer : MultiplayerPeerExtension {
+class SteamMultiplayerPeer : public MultiplayerPeerExtension {
   GDCLASS(SteamMultiplayerPeer, MultiplayerPeerExtension)
 
 public:
