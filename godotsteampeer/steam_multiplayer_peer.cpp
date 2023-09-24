@@ -15,41 +15,20 @@ using namespace godot;
 
 SteamMultiplayerPeer::SteamMultiplayerPeer() :
 		// Networking Sockets callbacks /////////////
-		callback_network_connection_status_changed(
-				this, &SteamMultiplayerPeer::network_connection_status_changed),
-		callback_network_authentication_status(
-				this, &SteamMultiplayerPeer::network_authentication_status),
-		callback_networking_fake_ip_result(
-				this, &SteamMultiplayerPeer::networking_fake_ip_result),
+		callback_network_connection_status_changed(this, &SteamMultiplayerPeer::network_connection_status_changed),
+		callback_network_authentication_status(this, &SteamMultiplayerPeer::network_authentication_status),
+		callback_networking_fake_ip_result(this, &SteamMultiplayerPeer::networking_fake_ip_result),
 
 		// Networking Utils callbacks ///////////////
-		callback_relay_network_status(
-				this, &SteamMultiplayerPeer::relay_network_status) {
-	SteamNetworkingIdentity *p_identity;
-	if (get_identity(p_identity)) {
-		UtilityFunctions::print("my ide with ", (long)p_identity->GetSteamID64());
-	} else {
-		UtilityFunctions::print("No ID now!");
-	}
-	// if(p_identity->IsInvalid())
-	// {
-	//   UtilityFunctions::print("p_identity is IsInvalid");
-	// }
-	// if(p_identity->IsLocalHost())
-	// {
-	//   UtilityFunctions::print("p_identity is IsLocalHost");
-	// }
-}
+		callback_relay_network_status(this, &SteamMultiplayerPeer::relay_network_status) {}
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {}
 
-Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer,
-		int32_t *r_buffer_size) {
+Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) {
 	return Error();
 }
 
-Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer,
-		int32_t p_buffer_size) {
+Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffer_size) {
 	return Error();
 }
 
@@ -121,8 +100,7 @@ int32_t SteamMultiplayerPeer::_get_unique_id() const { return 0; }
 
 bool SteamMultiplayerPeer::_is_server_relay_supported() const { return false; }
 
-MultiplayerPeer::ConnectionStatus
-SteamMultiplayerPeer::_get_connection_status() const {
+MultiplayerPeer::ConnectionStatus SteamMultiplayerPeer::_get_connection_status() const {
 	return MultiplayerPeer::ConnectionStatus::CONNECTION_CONNECTED;
 }
 
@@ -139,37 +117,27 @@ bool SteamMultiplayerPeer::close_listen_socket() {
 	return true;
 }
 
-Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port,
-		Array options) {
+Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, Array options) {
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CREATE;
 	}
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
-	const SteamNetworkingConfigValue_t *these_options =
-			convert_options_array(options);
-	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(
-
-			n_local_virtual_port, 0, nullptr);
+	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
+	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, 0, nullptr);
 	delete[] these_options;
 	UtilityFunctions::print("create_listen_socket_p2p with ", listen_socket);
-	SteamNetworkingIdentity *p_identity;
-	if (get_identity(p_identity)) {
-		UtilityFunctions::print("my ide with ", (long)p_identity->GetSteamID64());
-	} else {
-		UtilityFunctions::print("No ID now!");
-	}
-	// if(p_identity->IsInvalid())
-	// {
-	//   UtilityFunctions::print("p_identity is IsInvalid");
-	// }
-	// if(p_identity->IsLocalHost())
-	// {
-	//   UtilityFunctions::print("p_identity is IsLocalHost");
-	// }
 	return Error::OK;
 }
 
-Error SteamMultiplayerPeer::connect_p2p(const String &identity_remote, int n_remote_virtual_port, Array options) {
+Error SteamMultiplayerPeer::connect_p2p(int identity_remote, int n_remote_virtual_port, Array options) {
+	if (SteamNetworkingSockets() == NULL) {
+		return Error::ERR_CANT_CONNECT;
+	}
+	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
+	SteamNetworkingIdentity p_remote_id;
+	p_remote_id.SetSteamID64(identity_remote);
+	listen_socket = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
+	delete[] these_options;
 	return Error::OK;
 }
 
@@ -178,33 +146,17 @@ bool SteamMultiplayerPeer::get_identity(SteamNetworkingIdentity *p_identity) {
 }
 
 void SteamMultiplayerPeer::_bind_methods() {
-	// ClassDB::bind_method(D_METHOD("close_listen_socket"),
-	// &SteamMultiplayerPeer::close_listen_socket);
-	ClassDB::bind_method(
-			D_METHOD("create_listen_socket_p2p", "n_local_virtual_port", "options"),
-			&SteamMultiplayerPeer::create_listen_socket_p2p);
+	// ClassDB::bind_method(D_METHOD("close_listen_socket"), &SteamMultiplayerPeer::close_listen_socket);
+	ClassDB::bind_method(D_METHOD("create_listen_socket_p2p", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::create_listen_socket_p2p);
+	ClassDB::bind_method(D_METHOD("connect_p2p", "identity_remote", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::connect_p2p);
 
 	// NETWORKING SOCKETS SIGNALS ///////////////
-	ADD_SIGNAL(MethodInfo("network_connection_status_changed",
-			PropertyInfo(Variant::INT, "connect_handle"),
-			PropertyInfo(Variant::DICTIONARY, "connection"),
-			PropertyInfo(Variant::INT, "old_state")));
-	ADD_SIGNAL(MethodInfo("network_authentication_status",
-			PropertyInfo(Variant::INT, "available"),
-			PropertyInfo(Variant::STRING, "debug_message")));
-	ADD_SIGNAL(MethodInfo("networking_fake_ip_result",
-			PropertyInfo(Variant::INT, "result"),
-			PropertyInfo(Variant::STRING, "identity"),
-			PropertyInfo(Variant::STRING, "fake_ip"),
-			PropertyInfo(Variant::ARRAY, "port_list")));
+	ADD_SIGNAL(MethodInfo("network_connection_status_changed", PropertyInfo(Variant::INT, "connect_handle"), PropertyInfo(Variant::DICTIONARY, "connection"), PropertyInfo(Variant::INT, "old_state")));
+	ADD_SIGNAL(MethodInfo("network_authentication_status", PropertyInfo(Variant::INT, "available"), PropertyInfo(Variant::STRING, "debug_message")));
+	ADD_SIGNAL(MethodInfo("networking_fake_ip_result", PropertyInfo(Variant::INT, "result"), PropertyInfo(Variant::STRING, "identity"), PropertyInfo(Variant::STRING, "fake_ip"), PropertyInfo(Variant::ARRAY, "port_list")));
 
 	// NETWORKING UTILS SIGNALS /////////////////
-	ADD_SIGNAL(MethodInfo("relay_network_status",
-			PropertyInfo(Variant::INT, "available"),
-			PropertyInfo(Variant::INT, "ping_measurement"),
-			PropertyInfo(Variant::INT, "available_config"),
-			PropertyInfo(Variant::INT, "available_relay"),
-			PropertyInfo(Variant::STRING, "debug_message")));
+	ADD_SIGNAL(MethodInfo("relay_network_status", PropertyInfo(Variant::INT, "available"), PropertyInfo(Variant::INT, "ping_measurement"), PropertyInfo(Variant::INT, "available_config"), PropertyInfo(Variant::INT, "available_relay"), PropertyInfo(Variant::STRING, "debug_message")));
 }
 
 // NETWORKING SOCKETS CALLBACKS /////////////////
@@ -213,8 +165,7 @@ void SteamMultiplayerPeer::_bind_methods() {
 //! changes state. The m_info field will contain a complete description of the
 //! connection at the time the change occurred and the callback was posted. In
 //! particular, m_info.m_eState will have the new connection state.
-void SteamMultiplayerPeer::network_connection_status_changed(
-		SteamNetConnectionStatusChangedCallback_t *call_data) {
+void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionStatusChangedCallback_t *call_data) {
 	// Connection handle.
 	uint64_t connect_handle = call_data->m_hConn;
 	// Full connection info.
@@ -238,13 +189,11 @@ void SteamMultiplayerPeer::network_connection_status_changed(
 	// Previous state (current state is in m_info.m_eState).
 	int old_state = call_data->m_eOldState;
 	// // Send the data back via signal
-	emit_signal("network_connection_status_changed", connect_handle, connection,
-			old_state);
+	emit_signal("network_connection_status_changed", connect_handle, connection, old_state);
 }
 
 //! This callback is posted whenever the state of our readiness changes.
-void SteamMultiplayerPeer::network_authentication_status(
-		SteamNetAuthenticationStatus_t *call_data) {
+void SteamMultiplayerPeer::network_authentication_status(SteamNetAuthenticationStatus_t *call_data) {
 	// Status.
 	int available = call_data->m_eAvail;
 	// Non-localized English language status. For diagnostic / debugging purposes
@@ -259,8 +208,7 @@ void SteamMultiplayerPeer::network_authentication_status(
 // A struct used to describe a "fake IP" we have been assigned to use as an
 // identifier. This callback is posted when
 // ISteamNetworkingSoockets::BeginAsyncRequestFakeIP completes.
-void SteamMultiplayerPeer::networking_fake_ip_result(
-		SteamNetworkingFakeIPResult_t *call_data) {
+void SteamMultiplayerPeer::networking_fake_ip_result(SteamNetworkingFakeIPResult_t *call_data) {
 	int result = call_data->m_eResult;
 	// Pass this new networking identity to the map
 	networking_identities["fake_ip_identity"] = call_data->m_identity;
@@ -279,15 +227,13 @@ void SteamMultiplayerPeer::networking_fake_ip_result(
 	for (uint16 i = 0; i < sizeof(ports); i++) {
 		port_list.append(ports[i]);
 	}
-	emit_signal("networking_fake_ip_result", result, "fake_ip_identity", fake_ip,
-			port_list);
+	emit_signal("networking_fake_ip_result", result, "fake_ip_identity", fake_ip, port_list);
 }
 
 // NETWORKING UTILS CALLBACKS ///////////////////
 //
 //! A struct used to describe our readiness to use the relay network.
-void SteamMultiplayerPeer::relay_network_status(
-		SteamRelayNetworkStatus_t *call_data) {
+void SteamMultiplayerPeer::relay_network_status(SteamRelayNetworkStatus_t *call_data) {
 	int available = call_data->m_eAvail;
 	int ping_measurement = call_data->m_bPingMeasurementInProgress;
 	int available_config = call_data->m_eAvailNetworkConfig;
@@ -302,8 +248,7 @@ void SteamMultiplayerPeer::relay_network_status(
 
 // Helper function to turn an array of options into an array of
 // SteamNetworkingConfigValue_t structs
-const SteamNetworkingConfigValue_t *
-SteamMultiplayerPeer::convert_options_array(Array options) {
+const SteamNetworkingConfigValue_t *SteamMultiplayerPeer::convert_options_array(Array options) {
 	// Get the number of option arrays in the array.
 	int options_size = options.size();
 	// Create the array for options.
