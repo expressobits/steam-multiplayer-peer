@@ -252,8 +252,7 @@ const SteamNetworkingConfigValue_t *SteamMultiplayerPeer::convert_options_array(
 	// Get the number of option arrays in the array.
 	int options_size = options.size();
 	// Create the array for options.
-	SteamNetworkingConfigValue_t *option_array =
-			new SteamNetworkingConfigValue_t[options_size];
+	SteamNetworkingConfigValue_t *option_array = new SteamNetworkingConfigValue_t[options_size];
 	// If there are options
 	if (options_size > 0) {
 		// Populate the options
@@ -263,8 +262,7 @@ const SteamNetworkingConfigValue_t *SteamMultiplayerPeer::convert_options_array(
 			// Get the configuration value.
 			// This is a convoluted way of doing it but can't seem to cast the value
 			// as an enum so here we are.
-			ESteamNetworkingConfigValue this_value =
-					ESteamNetworkingConfigValue((int)sent_option[0]);
+			ESteamNetworkingConfigValue this_value = ESteamNetworkingConfigValue((int)sent_option[0]);
 			if ((int)sent_option[1] == 1) {
 				this_option.SetInt32(this_value, sent_option[2]);
 			} else if ((int)sent_option[1] == 2) {
