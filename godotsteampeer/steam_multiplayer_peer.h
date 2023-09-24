@@ -3,7 +3,12 @@
 
 #include <godot_cpp/classes/multiplayer_peer_extension.hpp>
 
-namespace godot {
+// Include Steamworks API headers
+#include "steam/steam_api.h"
+#include "steam/steamnetworkingfakeip.h"
+#include "map"
+
+using namespace godot;
 
 class SteamMultiplayerPeer : public MultiplayerPeerExtension {
   GDCLASS(SteamMultiplayerPeer, MultiplayerPeerExtension)
@@ -35,10 +40,24 @@ public:
   bool _is_server_relay_supported() const override;
   MultiplayerPeer::ConnectionStatus _get_connection_status() const override;
 
+  bool close_listen_socket();
+  Error create_listen_socket_p2p(int n_local_virtual_port, Array options);
+  const SteamNetworkingConfigValue_t* convert_options_array(Array options);
+  
+private:
+  HSteamListenSocket listen_socket;
+  std::map<String, SteamNetworkingIdentity> networking_identities;
+  // Networking Sockets callbacks /////////
+  STEAM_CALLBACK(SteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
+  STEAM_CALLBACK(SteamMultiplayerPeer, network_authentication_status, SteamNetAuthenticationStatus_t, callback_network_authentication_status);
+  STEAM_CALLBACK(SteamMultiplayerPeer, networking_fake_ip_result, SteamNetworkingFakeIPResult_t, callback_networking_fake_ip_result);
+
+  // Networking Utils callbacks ///////////
+  STEAM_CALLBACK(SteamMultiplayerPeer, relay_network_status, SteamRelayNetworkStatus_t, callback_relay_network_status);
+
+
 protected:
   static void _bind_methods();
 };
-
-} // namespace godot
 
 #endif // STEAM_MULTIPLAYER_PEER_H
