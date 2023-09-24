@@ -167,6 +167,12 @@ void SteamMultiplayerPeer::_bind_methods() {
 //! connection at the time the change occurred and the callback was posted. In
 //! particular, m_info.m_eState will have the new connection state.
 void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionStatusChangedCallback_t *call_data) {
+
+	if(call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting)
+	{
+		UtilityFunctions::print("[ALERTA] Try connecting!");
+	}
+
 	// Connection handle.
 	uint64_t connect_handle = call_data->m_hConn;
 	// Full connection info.
