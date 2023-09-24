@@ -20,7 +20,9 @@ SteamMultiplayerPeer::SteamMultiplayerPeer() :
 		callback_networking_fake_ip_result(this, &SteamMultiplayerPeer::networking_fake_ip_result),
 
 		// Networking Utils callbacks ///////////////
-		callback_relay_network_status(this, &SteamMultiplayerPeer::relay_network_status) {}
+		callback_relay_network_status(this, &SteamMultiplayerPeer::relay_network_status) {
+	
+}
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {}
 
@@ -121,7 +123,6 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CREATE;
 	}
-	SteamNetworkingUtils()->InitRelayNetworkAccess();
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, 0, nullptr);
 	delete[] these_options;
@@ -129,7 +130,7 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 	return Error::OK;
 }
 
-Error SteamMultiplayerPeer::connect_p2p(int identity_remote, int n_remote_virtual_port, Array options) {
+Error SteamMultiplayerPeer::connect_p2p(long identity_remote, int n_remote_virtual_port, Array options) {
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CONNECT;
 	}

@@ -42,7 +42,7 @@ public:
 
 	bool close_listen_socket();
 	Error create_listen_socket_p2p(int n_local_virtual_port, Array options);
-	Error connect_p2p(int identity_remote, int n_remote_virtual_port, Array options);
+	Error connect_p2p(long identity_remote, int n_remote_virtual_port, Array options);
 	bool get_identity(SteamNetworkingIdentity *p_identity);
 	const SteamNetworkingConfigValue_t *convert_options_array(Array options);
 
