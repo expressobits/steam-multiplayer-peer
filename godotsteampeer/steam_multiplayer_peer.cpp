@@ -21,7 +21,9 @@ SteamMultiplayerPeer::SteamMultiplayerPeer() :
 
 		// Networking Utils callbacks ///////////////
 		callback_relay_network_status(this, &SteamMultiplayerPeer::relay_network_status) {
-	
+
+		// int32_t id =SteamUser()->GetSteamID().ConvertToUint64();
+		// UtilityFunctions::print(id);
 }
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {}
@@ -31,12 +33,15 @@ Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buf
 }
 
 Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffer_size) {
+	ERR_FAIL_COND_V_MSG(!_is_active(), ERR_UNCONFIGURED, "The multiplayer instance isn't currently active.");
 	return Error();
 }
 
 int32_t SteamMultiplayerPeer::_get_available_packet_count() const { return 0; }
 
-int32_t SteamMultiplayerPeer::_get_max_packet_size() const { return 0; }
+int32_t SteamMultiplayerPeer::_get_max_packet_size() const {
+	return k_cbMaxSteamNetworkingSocketsMessageSizeSend;
+}
 
 // PackedByteArray SteamMultiplayerPeer::_get_packet_script()
 // {
@@ -49,11 +54,13 @@ int32_t SteamMultiplayerPeer::_get_max_packet_size() const { return 0; }
 //     return Error();
 // }
 
-int32_t SteamMultiplayerPeer::_get_packet_channel() const { return 0; }
+int32_t SteamMultiplayerPeer::_get_packet_channel() const {
+	ERR_FAIL_COND_V_MSG(!_is_active(), 1, "The multiplayer instance isn't currently active.");
+	return 0;
+}
 
 MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
-	// ERR_FAIL_COND_V_MSG(!_is_active(), TRANSFER_MODE_RELIABLE, "The multiplayer
-	// instance isn't currently active.");
+	ERR_FAIL_COND_V_MSG(!_is_active(), TRANSFER_MODE_RELIABLE, "The multiplayer instance isn't currently active.");
 	// ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, TRANSFER_MODE_RELIABLE,
 	// "No pending packets, cannot get transfer mode.");
 
@@ -77,21 +84,35 @@ MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 
 void SteamMultiplayerPeer::_set_target_peer(int32_t p_peer) {}
 
-int32_t SteamMultiplayerPeer::_get_packet_peer() const { return 0; }
+int32_t SteamMultiplayerPeer::_get_packet_peer() const {
+	ERR_FAIL_COND_V_MSG(!_is_active(), 1, "The multiplayer instance isn't currently active.");
+	return 0;
+}
 
-bool SteamMultiplayerPeer::_is_server() const { return listen_socket != 0; }
+bool SteamMultiplayerPeer::_is_server() const { return active_mode == MODE_SERVER; }
 
-void SteamMultiplayerPeer::_poll() {}
+void SteamMultiplayerPeer::_poll() {
+	ERR_FAIL_COND_MSG(!_is_active(), "The multiplayer instance isn't currently active.");
+}
 
 void SteamMultiplayerPeer::_close() {
+	if (!_is_active()) {
+		return;
+	}
 	if (_is_server()) {
 		close_listen_socket();
 	}
+	active_mode = MODE_NONE;
 }
 
-void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {}
+void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
+	// ERR_FAIL_COND(!_is_active() || !peers.has(p_peer));
+}
 
-int32_t SteamMultiplayerPeer::_get_unique_id() const { return 0; }
+int32_t SteamMultiplayerPeer::_get_unique_id() const { 
+	ERR_FAIL_COND_V_MSG(!_is_active(), 0, "The multiplayer instance isn't currently active.");
+	return SteamUser()->GetSteamID().ConvertToUint64();
+}
 
 // void SteamMultiplayerPeer::_set_refuse_new_connections(bool p_enable) {}
 
@@ -100,7 +121,7 @@ int32_t SteamMultiplayerPeer::_get_unique_id() const { return 0; }
 //     return false;
 // }
 
-bool SteamMultiplayerPeer::_is_server_relay_supported() const { return false; }
+bool SteamMultiplayerPeer::_is_server_relay_supported() const { return active_mode == MODE_SERVER || active_mode == MODE_CLIENT; }
 
 MultiplayerPeer::ConnectionStatus SteamMultiplayerPeer::_get_connection_status() const {
 	return MultiplayerPeer::ConnectionStatus::CONNECTION_CONNECTED;
@@ -119,7 +140,9 @@ bool SteamMultiplayerPeer::close_listen_socket() {
 	return true;
 }
 
+// TODO Rename to create_server? for following enet pattern?
 Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, Array options) {
+	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CREATE;
 	}
@@ -127,10 +150,13 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, 0, nullptr);
 	delete[] these_options;
 	UtilityFunctions::print("create_listen_socket_p2p with ", listen_socket);
+	active_mode = MODE_SERVER;
 	return Error::OK;
 }
 
+// TODO Rename to create_client? for following enet pattern?
 Error SteamMultiplayerPeer::connect_p2p(long identity_remote, int n_remote_virtual_port, Array options) {
+	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CONNECT;
 	}
@@ -139,6 +165,7 @@ Error SteamMultiplayerPeer::connect_p2p(long identity_remote, int n_remote_virtu
 	p_remote_id.SetSteamID64(identity_remote);
 	listen_socket = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
 	delete[] these_options;
+	active_mode = MODE_CLIENT;
 	return Error::OK;
 }
 
@@ -167,19 +194,14 @@ void SteamMultiplayerPeer::_bind_methods() {
 //! connection at the time the change occurred and the callback was posted. In
 //! particular, m_info.m_eState will have the new connection state.
 void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionStatusChangedCallback_t *call_data) {
-
-
 	// Connection handle.
 	uint64_t connect_handle = call_data->m_hConn;
 	// Full connection info.
 	SteamNetConnectionInfo_t connection_info = call_data->m_info;
 
-	if(connection_info.m_hListenSocket)
-	{
-		UtilityFunctions::print("m_hListenSocket is =",connection_info.m_hListenSocket);
-	}
-	else
-	{
+	if (connection_info.m_hListenSocket) {
+		UtilityFunctions::print("m_hListenSocket is =", connection_info.m_hListenSocket);
+	} else {
 		UtilityFunctions::print("m_hListenSocket is null!");
 	}
 
@@ -205,20 +227,16 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	emit_signal("network_connection_status_changed", connect_handle, connection, old_state);
 
 	// Check if a client has connected
-	if(connection_info.m_hListenSocket && call_data->m_eOldState == CONNECTION_STATE_NONE && call_data->m_info.m_eState == CONNECTION_STATE_CONNECTING )
-	{
+	if (connection_info.m_hListenSocket && call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None && call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
 		// Connection from a new client
 		// Search for an available slot
-		for (size_t i = 0; i < MAX_PLAYERS_PER_SERVER; i++)
-		{
-			if (!m_rgClientData[i].m_bActive)
-			{
+		for (size_t i = 0; i < MAX_PLAYERS_PER_SERVER; i++) {
+			if (!m_rgClientData[i].m_bActive) {
 				// Found one.  "Accept" the connection.
 				EResult res = SteamGameServerNetworkingSockets()->AcceptConnection(call_data->m_hConn);
-				if ( res != k_EResultOK )
-				{
+				if (res != k_EResultOK) {
 					UtilityFunctions::print("AcceptConnection returned", res);
-					SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false );
+					SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false);
 					return;
 				}
 
@@ -230,10 +248,8 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 
 		// No empty slots.  Server full!
 		UtilityFunctions::print("Rejecting connection; server full");
-		SteamGameServerNetworkingSockets()->CloseConnection( call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Server full!", false );
-		
+		SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Server full!", false);
 	}
-	
 }
 
 //! This callback is posted whenever the state of our readiness changes.

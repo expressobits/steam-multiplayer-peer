@@ -29,6 +29,20 @@ struct ClientConnectionData_t
 class SteamMultiplayerPeer : public MultiplayerPeerExtension {
 	GDCLASS(SteamMultiplayerPeer, MultiplayerPeerExtension)
 
+private:
+	enum Mode {
+		MODE_NONE,
+		MODE_SERVER,
+		MODE_CLIENT
+	};
+
+	Mode active_mode = MODE_NONE;
+	_FORCE_INLINE_ bool _is_active() const { return active_mode != MODE_NONE; }
+
+protected:
+	static void _bind_methods();
+
+public:
 	enum SocketConnectionType {
 		NET_SOCKET_CONNECTION_TYPE_NOT_CONNECTED = k_ESNetSocketConnectionTypeNotConnected,
 		NET_SOCKET_CONNECTION_TYPE_UDP = k_ESNetSocketConnectionTypeUDP,
@@ -60,8 +74,6 @@ class SteamMultiplayerPeer : public MultiplayerPeerExtension {
 		CONNECTION_STATE_DEAD = k_ESteamNetworkingConnectionState_Dead,
 		CONNECTION_STATE_FORCE_32BIT = k_ESteamNetworkingConnectionState__Force32Bit
 	};
-
-public:
 	SteamMultiplayerPeer();
 	~SteamMultiplayerPeer();
 	Error _get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) override;
@@ -107,8 +119,7 @@ private:
 	// Networking Utils callbacks ///////////
 	STEAM_CALLBACK(SteamMultiplayerPeer, relay_network_status, SteamRelayNetworkStatus_t, callback_relay_network_status);
 
-protected:
-	static void _bind_methods();
+
 };
 
 #endif // STEAM_MULTIPLAYER_PEER_H
