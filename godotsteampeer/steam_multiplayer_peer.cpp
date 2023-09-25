@@ -21,9 +21,8 @@ SteamMultiplayerPeer::SteamMultiplayerPeer() :
 
 		// Networking Utils callbacks ///////////////
 		callback_relay_network_status(this, &SteamMultiplayerPeer::relay_network_status) {
-
-		// int32_t id =SteamUser()->GetSteamID().ConvertToUint64();
-		// UtilityFunctions::print(id);
+	// int32_t id =SteamUser()->GetSteamID().ConvertToUint64();
+	// UtilityFunctions::print(id);
 }
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {}
@@ -89,7 +88,9 @@ int32_t SteamMultiplayerPeer::_get_packet_peer() const {
 	return 0;
 }
 
-bool SteamMultiplayerPeer::_is_server() const { return active_mode == MODE_SERVER; }
+bool SteamMultiplayerPeer::_is_server() const {
+	return unique_id == 1;
+}
 
 void SteamMultiplayerPeer::_poll() {
 	ERR_FAIL_COND_MSG(!_is_active(), "The multiplayer instance isn't currently active.");
@@ -103,15 +104,16 @@ void SteamMultiplayerPeer::_close() {
 		close_listen_socket();
 	}
 	active_mode = MODE_NONE;
+	unique_id = 0;
 }
 
 void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
 	// ERR_FAIL_COND(!_is_active() || !peers.has(p_peer));
 }
 
-int32_t SteamMultiplayerPeer::_get_unique_id() const { 
+int32_t SteamMultiplayerPeer::_get_unique_id() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), 0, "The multiplayer instance isn't currently active.");
-	return SteamUser()->GetSteamID().ConvertToUint64();
+	return unique_id;
 }
 
 // void SteamMultiplayerPeer::_set_refuse_new_connections(bool p_enable) {}
@@ -151,6 +153,7 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 	delete[] these_options;
 	UtilityFunctions::print("create_listen_socket_p2p with ", listen_socket);
 	active_mode = MODE_SERVER;
+	unique_id = 1;
 	return Error::OK;
 }
 
@@ -163,9 +166,10 @@ Error SteamMultiplayerPeer::connect_p2p(long identity_remote, int n_remote_virtu
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	SteamNetworkingIdentity p_remote_id;
 	p_remote_id.SetSteamID64(identity_remote);
+	active_mode = MODE_CLIENT;
+	unique_id = generate_unique_id();
 	listen_socket = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
 	delete[] these_options;
-	active_mode = MODE_CLIENT;
 	return Error::OK;
 }
 

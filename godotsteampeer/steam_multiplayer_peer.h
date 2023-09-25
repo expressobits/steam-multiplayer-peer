@@ -37,6 +37,7 @@ private:
 	};
 
 	Mode active_mode = MODE_NONE;
+	uint32_t unique_id = 0;
 	_FORCE_INLINE_ bool _is_active() const { return active_mode != MODE_NONE; }
 
 protected:
