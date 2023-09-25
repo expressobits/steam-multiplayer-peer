@@ -10,8 +10,56 @@
 
 using namespace godot;
 
+#define MAX_PLAYERS_PER_SERVER 16
+
+struct ClientConnectionData_t
+{
+	bool m_bActive;					// Is this slot in use? Or is it available for new connections?
+	CSteamID m_SteamIDUser;			// What is the steamid of the player?
+	uint64 m_ulTickCountLastData;	// What was the last time we got data from the player?
+	HSteamNetConnection m_hConn;	// The handle for the connection to the player
+
+	ClientConnectionData_t() {
+		m_bActive = false;
+		m_ulTickCountLastData = 0;
+		m_hConn = 0;
+	}
+};
+
 class SteamMultiplayerPeer : public MultiplayerPeerExtension {
 	GDCLASS(SteamMultiplayerPeer, MultiplayerPeerExtension)
+
+	enum SocketConnectionType {
+		NET_SOCKET_CONNECTION_TYPE_NOT_CONNECTED = k_ESNetSocketConnectionTypeNotConnected,
+		NET_SOCKET_CONNECTION_TYPE_UDP = k_ESNetSocketConnectionTypeUDP,
+		NET_SOCKET_CONNECTION_TYPE_UDP_RELAY = k_ESNetSocketConnectionTypeUDPRelay
+	};
+	enum SocketState {
+		NET_SOCKET_STATE_INVALID = k_ESNetSocketStateInvalid,
+		NET_SOCKET_STATE_CONNECTED = k_ESNetSocketStateConnected,
+		NET_SOCKET_STATE_INITIATED = k_ESNetSocketStateInitiated,
+		NET_SOCKET_STATE_LOCAL_CANDIDATE_FOUND = k_ESNetSocketStateLocalCandidatesFound,
+		NET_SOCKET_STATE_RECEIVED_REMOTE_CANDIDATES = k_ESNetSocketStateReceivedRemoteCandidates,
+		NET_SOCKET_STATE_CHALLENGE_HANDSHAKE = k_ESNetSocketStateChallengeHandshake,
+		NET_SOCKET_STATE_DISCONNECTING = k_ESNetSocketStateDisconnecting,
+		NET_SOCKET_STATE_LOCAL_DISCONNECT = k_ESNetSocketStateLocalDisconnect,
+		NET_SOCKET_STATE_TIMEOUT_DURING_CONNECT = k_ESNetSocketStateTimeoutDuringConnect,
+		NET_SOCKET_STATE_REMOTE_END_DISCONNECTED = k_ESNetSocketStateRemoteEndDisconnected,
+		NET_SOCKET_STATE_BROKEN = k_ESNetSocketStateConnectionBroken
+	};
+
+	enum NetworkingConnectionState {
+		CONNECTION_STATE_NONE = k_ESteamNetworkingConnectionState_None,
+		CONNECTION_STATE_CONNECTING = k_ESteamNetworkingConnectionState_Connecting,
+		CONNECTION_STATE_FINDING_ROUTE = k_ESteamNetworkingConnectionState_FindingRoute,
+		CONNECTION_STATE_CONNECTED = k_ESteamNetworkingConnectionState_Connected,
+		CONNECTION_STATE_CLOSED_BY_PEER = k_ESteamNetworkingConnectionState_ClosedByPeer,
+		CONNECTION_STATE_PROBLEM_DETECTED_LOCALLY = k_ESteamNetworkingConnectionState_ProblemDetectedLocally,
+		CONNECTION_STATE_FIN_WAIT = k_ESteamNetworkingConnectionState_FinWait,
+		CONNECTION_STATE_LINGER = k_ESteamNetworkingConnectionState_Linger,
+		CONNECTION_STATE_DEAD = k_ESteamNetworkingConnectionState_Dead,
+		CONNECTION_STATE_FORCE_32BIT = k_ESteamNetworkingConnectionState__Force32Bit
+	};
 
 public:
 	SteamMultiplayerPeer();
@@ -49,6 +97,10 @@ public:
 private:
 	HSteamListenSocket listen_socket;
 	std::map<String, SteamNetworkingIdentity> networking_identities;
+	// Vector to keep track of client connections
+	ClientConnectionData_t m_rgClientData[MAX_PLAYERS_PER_SERVER];
+	// Vector to keep track of client connections which are pending auth
+	ClientConnectionData_t m_rgPendingClientData[MAX_PLAYERS_PER_SERVER];
 	// Networking Sockets callbacks /////////
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_authentication_status, SteamNetAuthenticationStatus_t, callback_network_authentication_status);

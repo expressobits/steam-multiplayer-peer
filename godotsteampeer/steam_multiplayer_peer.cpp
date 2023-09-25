@@ -168,15 +168,21 @@ void SteamMultiplayerPeer::_bind_methods() {
 //! particular, m_info.m_eState will have the new connection state.
 void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionStatusChangedCallback_t *call_data) {
 
-	if(call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting)
-	{
-		UtilityFunctions::print("[ALERTA] Try connecting!");
-	}
 
 	// Connection handle.
 	uint64_t connect_handle = call_data->m_hConn;
 	// Full connection info.
 	SteamNetConnectionInfo_t connection_info = call_data->m_info;
+
+	if(connection_info.m_hListenSocket)
+	{
+		UtilityFunctions::print("m_hListenSocket is =",connection_info.m_hListenSocket);
+	}
+	else
+	{
+		UtilityFunctions::print("m_hListenSocket is null!");
+	}
+
 	// Move connection info into a dictionary
 	Dictionary connection;
 	char identity[STEAM_BUFFER_SIZE];
@@ -197,6 +203,32 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	int old_state = call_data->m_eOldState;
 	// // Send the data back via signal
 	emit_signal("network_connection_status_changed", connect_handle, connection, old_state);
+
+	// Check if a client has connected
+	if(connection_info.m_hListenSocket && call_data->m_eOldState == CONNECTION_STATE_NONE && call_data->m_info.m_eState == CONNECTION_STATE_CONNECTING )
+	{
+		// Connection from a new client
+		// Search for an available slot
+		for (size_t i = 0; i < MAX_PLAYERS_PER_SERVER; i++)
+		{
+			if (!m_rgClientData[i].m_bActive)
+			{
+				// Found one.  "Accept" the connection.
+				EResult res = SteamGameServerNetworkingSockets()->AcceptConnection(call_data->m_hConn);
+				if ( res != k_EResultOK )
+				{
+					UtilityFunctions::print("AcceptConnection returned", res);
+					SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false );
+					return;
+				}
+
+				m_rgPendingClientData[i].m_hConn = call_data->m_hConn;
+			}
+		}
+		
+		
+	}
+	
 }
 
 //! This callback is posted whenever the state of our readiness changes.
