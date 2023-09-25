@@ -99,8 +99,6 @@ private:
 	std::map<String, SteamNetworkingIdentity> networking_identities;
 	// Vector to keep track of client connections
 	ClientConnectionData_t m_rgClientData[MAX_PLAYERS_PER_SERVER];
-	// Vector to keep track of client connections which are pending auth
-	ClientConnectionData_t m_rgPendingClientData[MAX_PLAYERS_PER_SERVER];
 	// Networking Sockets callbacks /////////
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_authentication_status, SteamNetAuthenticationStatus_t, callback_network_authentication_status);

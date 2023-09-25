@@ -222,10 +222,15 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 					return;
 				}
 
-				m_rgPendingClientData[i].m_hConn = call_data->m_hConn;
+				m_rgClientData[i].m_hConn = call_data->m_hConn;
+				m_rgClientData[i].m_SteamIDUser = call_data->m_info.m_identityRemote.GetSteamID();
+				m_rgClientData[i].m_bActive = true;
 			}
 		}
-		
+
+		// No empty slots.  Server full!
+		UtilityFunctions::print("Rejecting connection; server full");
+		SteamGameServerNetworkingSockets()->CloseConnection( call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Server full!", false );
 		
 	}
 	
