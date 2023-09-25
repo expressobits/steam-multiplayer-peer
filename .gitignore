@@ -7,6 +7,7 @@
 **/ipch/
 **/*.obj
 **/*.VC.db
+**/*.os
 
 .vscode/
 bin/
