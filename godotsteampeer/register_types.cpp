@@ -7,12 +7,16 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/godot.hpp>
 
+#include "steam_id.h"
+#include "steam_connection.h"
 #include "steam_multiplayer_peer.h"
 
 using namespace godot;
 
 void initialize_godotsteampeer(ModuleInitializationLevel level){
 	if(level == MODULE_INITIALIZATION_LEVEL_SCENE){
+		ClassDB::register_class<SteamID>();
+		ClassDB::register_class<SteamConnection>();
 		ClassDB::register_class<SteamMultiplayerPeer>();
 	}
 }

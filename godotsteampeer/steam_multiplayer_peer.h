@@ -2,6 +2,7 @@
 #define STEAM_MULTIPLAYER_PEER_H
 
 #include <godot_cpp/classes/multiplayer_peer_extension.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
 
 // Include Steamworks API headers
 #include "map"
@@ -39,6 +40,7 @@ private:
 	Mode active_mode = MODE_NONE;
 	uint32_t unique_id = 0;
 	_FORCE_INLINE_ bool _is_active() const { return active_mode != MODE_NONE; }
+	HashMap<int, uint64> hosts;
 
 protected:
 	static void _bind_methods();
