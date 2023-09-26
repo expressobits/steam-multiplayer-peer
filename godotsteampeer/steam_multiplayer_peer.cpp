@@ -103,6 +103,8 @@ void SteamMultiplayerPeer::_close() {
 	if (_is_server()) {
 		close_listen_socket();
 	}
+	peerId_to_steamId.clear();
+    connections_by_steamId64.clear();
 	active_mode = MODE_NONE;
 	unique_id = 0;
 }
@@ -232,23 +234,16 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 
 	// Check if a client has connected
 	if (connection_info.m_hListenSocket && call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None && call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
-		// Connection from a new client
-		// Search for an available slot
-		for (size_t i = 0; i < MAX_PLAYERS_PER_SERVER; i++) {
-			if (!m_rgClientData[i].m_bActive) {
-				// Found one.  "Accept" the connection.
-				EResult res = SteamGameServerNetworkingSockets()->AcceptConnection(call_data->m_hConn);
-				if (res != k_EResultOK) {
-					UtilityFunctions::print("AcceptConnection returned", res);
-					SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false);
-					return;
-				}
-
-				m_rgClientData[i].m_hConn = call_data->m_hConn;
-				m_rgClientData[i].m_SteamIDUser = call_data->m_info.m_identityRemote.GetSteamID();
-				m_rgClientData[i].m_bActive = true;
-			}
+		
+		
+		EResult res = SteamGameServerNetworkingSockets()->AcceptConnection(call_data->m_hConn);
+		if (res != k_EResultOK) {
+			UtilityFunctions::print("AcceptConnection returned", res);
+			SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false);
+			return;
 		}
+		add_pending_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
+		
 
 		// No empty slots.  Server full!
 		UtilityFunctions::print("Rejecting connection; server full");
@@ -275,23 +270,25 @@ void SteamMultiplayerPeer::network_authentication_status(SteamNetAuthenticationS
 void SteamMultiplayerPeer::networking_fake_ip_result(SteamNetworkingFakeIPResult_t *call_data) {
 	int result = call_data->m_eResult;
 	// Pass this new networking identity to the map
-	networking_identities["fake_ip_identity"] = call_data->m_identity;
-	uint32 ip = call_data->m_unIP;
-	// Convert the IP address back to a string
-	const int NBYTES = 4;
-	uint8 octet[NBYTES];
-	char fake_ip[16];
-	for (int i = 0; i < NBYTES; i++) {
-		octet[i] = ip >> (i * 8);
-	}
-	sprintf(fake_ip, "%d.%d.%d.%d", octet[0], octet[1], octet[2], octet[3]);
-	// Get the ports as an array
-	Array port_list;
-	uint16 *ports = call_data->m_unPorts;
-	for (uint16 i = 0; i < sizeof(ports); i++) {
-		port_list.append(ports[i]);
-	}
-	emit_signal("networking_fake_ip_result", result, "fake_ip_identity", fake_ip, port_list);
+	// TODO networking_identities removed?
+	// networking_identities["fake_ip_identity"] = call_data->m_identity;
+	// uint32 ip = call_data->m_unIP;
+	// // Convert the IP address back to a string
+	// const int NBYTES = 4;
+	// uint8 octet[NBYTES];
+	// char fake_ip[16];
+	// for (int i = 0; i < NBYTES; i++) {
+	// 	octet[i] = ip >> (i * 8);
+	// }
+	// sprintf(fake_ip, "%d.%d.%d.%d", octet[0], octet[1], octet[2], octet[3]);
+	// // Get the ports as an array
+	// Array port_list;
+	// uint16 *ports = call_data->m_unPorts;
+	// for (uint16 i = 0; i < sizeof(ports); i++) {
+	// 	port_list.append(ports[i]);
+	// }
+	// emit_signal("networking_fake_ip_result", result, "fake_ip_identity", fake_ip, port_list);
+	UtilityFunctions::printerr("networking_fake_ip_result not implemented! Because networking_identities not found!");
 }
 
 // NETWORKING UTILS CALLBACKS ///////////////////
@@ -310,6 +307,8 @@ void SteamMultiplayerPeer::relay_network_status(SteamRelayNetworkStatus_t *call_
 	delete[] debug_message;
 }
 
+// GODOT MULTIPLAYER PEER UTILS  ///////////////////
+//
 // Helper function to turn an array of options into an array of
 // SteamNetworkingConfigValue_t structs
 const SteamNetworkingConfigValue_t *SteamMultiplayerPeer::convert_options_array(Array options) {
@@ -347,4 +346,25 @@ const SteamNetworkingConfigValue_t *SteamMultiplayerPeer::convert_options_array(
 		}
 	}
 	return option_array;
+}
+
+void SteamMultiplayerPeer::add_connection_peer(const SteamID &steam_id, HSteamNetConnection connection, int peer_id) {
+    ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
+
+    Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steam_id)));
+	connection_data->m_hConn = connection;
+    connections_by_steamId64[steam_id.to_int()] = connection_data;
+	
+	// TODO Remove
+	// NO USE PING On sockets for connection
+    // Error a = connectionData->ping();
+
+    // if(a != OK) {
+    //     DEBUG_DATA_SIGNAL_V("add_connection_peer: Error sending ping. ", a);    //shouldn't this be DEBUG_DATA_COND_SIGNAL_V or something like that?
+    // }
+    // ERR_FAIL_COND_MSG(a != OK, "Message failed to join.");
+}
+
+void SteamMultiplayerPeer::add_pending_peer(const SteamID &steamId, HSteamNetConnection connection) {
+    add_connection_peer(steamId, connection, -1);
 }

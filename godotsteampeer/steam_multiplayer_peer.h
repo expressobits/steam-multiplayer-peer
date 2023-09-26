@@ -6,6 +6,7 @@
 
 // Include Steamworks API headers
 #include "map"
+#include "steam_connection.h"
 #include "steam/steam_api.h"
 #include "steam/steamnetworkingfakeip.h"
 
@@ -13,19 +14,6 @@ using namespace godot;
 
 #define MAX_PLAYERS_PER_SERVER 16
 
-struct ClientConnectionData_t
-{
-	bool m_bActive;					// Is this slot in use? Or is it available for new connections?
-	CSteamID m_SteamIDUser;			// What is the steamid of the player?
-	uint64 m_ulTickCountLastData;	// What was the last time we got data from the player?
-	HSteamNetConnection m_hConn;	// The handle for the connection to the player
-
-	ClientConnectionData_t() {
-		m_bActive = false;
-		m_ulTickCountLastData = 0;
-		m_hConn = 0;
-	}
-};
 
 class SteamMultiplayerPeer : public MultiplayerPeerExtension {
 	GDCLASS(SteamMultiplayerPeer, MultiplayerPeerExtension)
@@ -108,12 +96,14 @@ public:
 	Error connect_p2p(long identity_remote, int n_remote_virtual_port, Array options);
 	bool get_identity(SteamNetworkingIdentity *p_identity);
 	const SteamNetworkingConfigValue_t *convert_options_array(Array options);
+	void add_connection_peer(const SteamID &steamId, HSteamNetConnection connection, int peer_id);
+	void add_pending_peer(const SteamID &steamId, HSteamNetConnection connection);
 
 private:
+	HashMap<int64_t, Ref<SteamConnection>> connections_by_steamId64;
+    HashMap<int, Ref<SteamConnection>> peerId_to_steamId;
 	HSteamListenSocket listen_socket;
-	std::map<String, SteamNetworkingIdentity> networking_identities;
-	// Vector to keep track of client connections
-	ClientConnectionData_t m_rgClientData[MAX_PLAYERS_PER_SERVER];
+	List<SteamConnection::Packet*> incoming_packets;
 	// Networking Sockets callbacks /////////
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_authentication_status, SteamNetAuthenticationStatus_t, callback_network_authentication_status);
