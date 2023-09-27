@@ -41,11 +41,20 @@ public:
     uint64_t last_msg_timestamp;
     SteamNetworkingIdentity networkIdentity;
 
+    //How is this best used with smart pointers?
+    //
+    //Looks like it can be done, but we'll need to look at where the packets come from, and how they're used, to determine the right kind.
+    List<Packet *> pending_retry_packets;
+
+private:
+    EResult _raw_send(Packet* packet);
+    String _convert_eresult_to_string(EResult e);
+
 protected:
 	static void _bind_methods();
 
 public:
-    EResult raw_send(Packet* packet);
+    Error send_pending();
 	bool operator==(const SteamConnection &data);
 	SteamConnection(SteamID steam_id);
 	SteamConnection() {}
