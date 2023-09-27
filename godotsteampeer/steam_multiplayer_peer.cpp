@@ -25,7 +25,10 @@ SteamMultiplayerPeer::SteamMultiplayerPeer() :
 	// UtilityFunctions::print(id);
 }
 
-SteamMultiplayerPeer::~SteamMultiplayerPeer() {}
+SteamMultiplayerPeer::~SteamMultiplayerPeer() {
+
+	// TODO in SteamMessages is disable peer with leave lobby, check if need Close connection here
+}
 
 Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) {
 	return Error();
@@ -54,21 +57,22 @@ int32_t SteamMultiplayerPeer::_get_max_packet_size() const {
 // }
 
 int32_t SteamMultiplayerPeer::_get_packet_channel() const {
-	ERR_FAIL_COND_V_MSG(!_is_active(), 1, "The multiplayer instance isn't currently active.");
-	return 0;
+	ERR_FAIL_COND_V_MSG(!_is_active(), TRANSFER_MODE_RELIABLE, "The multiplayer instance isn't currently active.");
+    ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, TRANSFER_MODE_RELIABLE, "No pending packets, cannot get channel.");
+
+    return incoming_packets.front()->get()->channel;
 }
 
 MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), TRANSFER_MODE_RELIABLE, "The multiplayer instance isn't currently active.");
-	// ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, TRANSFER_MODE_RELIABLE,
-	// "No pending packets, cannot get transfer mode.");
+	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, TRANSFER_MODE_RELIABLE, "No pending packets, cannot get transfer mode.");
 
-	// if(incoming_packets.front()->get()->transfer_mode &
-	// k_nSteamNetworkingSend_Reliable) {
-	return TRANSFER_MODE_RELIABLE;
-	// } else {
-	// return TRANSFER_MODE_UNRELIABLE;
-	// }
+	if (incoming_packets.front()->get()->transfer_mode &
+			k_nSteamNetworkingSend_Reliable) {
+		return TRANSFER_MODE_RELIABLE;
+	} else {
+		return TRANSFER_MODE_UNRELIABLE;
+	}
 }
 
 // void SteamMultiplayerPeer::_set_transfer_channel(int32_t p_channel) {}
@@ -85,7 +89,9 @@ void SteamMultiplayerPeer::_set_target_peer(int32_t p_peer) {}
 
 int32_t SteamMultiplayerPeer::_get_packet_peer() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), 1, "The multiplayer instance isn't currently active.");
-	return 0;
+    ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, 1, "No packets to receive.");
+
+    return connections_by_steamId64[incoming_packets.front()->get()->sender.to_int()]->peer_id;
 }
 
 bool SteamMultiplayerPeer::_is_server() const {
@@ -104,9 +110,10 @@ void SteamMultiplayerPeer::_close() {
 		close_listen_socket();
 	}
 	peerId_to_steamId.clear();
-    connections_by_steamId64.clear();
+	connections_by_steamId64.clear();
 	active_mode = MODE_NONE;
 	unique_id = 0;
+	steam_id.set_from_CSteamID(CSteamID()); // = SteamID();
 }
 
 void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
@@ -234,8 +241,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 
 	// Check if a client has connected
 	if (connection_info.m_hListenSocket && call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None && call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
-		
-		
 		EResult res = SteamGameServerNetworkingSockets()->AcceptConnection(call_data->m_hConn);
 		if (res != k_EResultOK) {
 			UtilityFunctions::print("AcceptConnection returned", res);
@@ -243,7 +248,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 			return;
 		}
 		add_pending_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
-		
 
 		// No empty slots.  Server full!
 		UtilityFunctions::print("Rejecting connection; server full");
@@ -288,7 +292,7 @@ void SteamMultiplayerPeer::networking_fake_ip_result(SteamNetworkingFakeIPResult
 	// 	port_list.append(ports[i]);
 	// }
 	// emit_signal("networking_fake_ip_result", result, "fake_ip_identity", fake_ip, port_list);
-	UtilityFunctions::printerr("networking_fake_ip_result not implemented! Because networking_identities not found!");
+	UtilityFunctions::print("networking_fake_ip_result not implemented! Because networking_identities not found!");
 }
 
 // NETWORKING UTILS CALLBACKS ///////////////////
@@ -349,22 +353,23 @@ const SteamNetworkingConfigValue_t *SteamMultiplayerPeer::convert_options_array(
 }
 
 void SteamMultiplayerPeer::add_connection_peer(const SteamID &steam_id, HSteamNetConnection connection, int peer_id) {
-    ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
+	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
 
-    Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steam_id)));
-	connection_data->m_hConn = connection;
-    connections_by_steamId64[steam_id.to_int()] = connection_data;
-	
+	Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steam_id)));
+	connection_data->connection = connection;
+	connection_data->peer_id = peer_id;
+	connections_by_steamId64[steam_id.to_int()] = connection_data;
+
 	// TODO Remove
 	// NO USE PING On sockets for connection
-    // Error a = connectionData->ping();
+	// Error a = connectionData->ping();
 
-    // if(a != OK) {
-    //     DEBUG_DATA_SIGNAL_V("add_connection_peer: Error sending ping. ", a);    //shouldn't this be DEBUG_DATA_COND_SIGNAL_V or something like that?
-    // }
-    // ERR_FAIL_COND_MSG(a != OK, "Message failed to join.");
+	// if(a != OK) {
+	//     DEBUG_DATA_SIGNAL_V("add_connection_peer: Error sending ping. ", a);    //shouldn't this be DEBUG_DATA_COND_SIGNAL_V or something like that?
+	// }
+	// ERR_FAIL_COND_MSG(a != OK, "Message failed to join.");
 }
 
 void SteamMultiplayerPeer::add_pending_peer(const SteamID &steamId, HSteamNetConnection connection) {
-    add_connection_peer(steamId, connection, -1);
+	add_connection_peer(steamId, connection, -1);
 }

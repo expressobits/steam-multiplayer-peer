@@ -29,6 +29,7 @@ private:
 	uint32_t unique_id = 0;
 	_FORCE_INLINE_ bool _is_active() const { return active_mode != MODE_NONE; }
 	HashMap<int, uint64> hosts;
+	SteamID steam_id = SteamID();
 
 protected:
 	static void _bind_methods();
