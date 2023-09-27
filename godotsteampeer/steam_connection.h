@@ -49,13 +49,15 @@ public:
 private:
     EResult _raw_send(Packet* packet);
     String _convert_eresult_to_string(EResult e);
+    Error _send_pending();
+    void _add_packet(Packet* packet);
 
 protected:
 	static void _bind_methods();
 
 public:
-    Error send_pending();
 	bool operator==(const SteamConnection &data);
+    Error send(Packet* packet);
 	SteamConnection(SteamID steam_id);
 	SteamConnection() {}
 	~SteamConnection();

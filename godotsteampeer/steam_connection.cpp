@@ -17,7 +17,7 @@ EResult SteamConnection::_raw_send(Packet* packet) {
 }
 
 // TODO change to return correct error
-Error SteamConnection::send_pending() {
+Error SteamConnection::_send_pending() {
 	while(pending_retry_packets.size() > 0) {
         Packet* packet = pending_retry_packets.front()->get();
         EResult errorCode = _raw_send(packet);
@@ -40,6 +40,15 @@ Error SteamConnection::send_pending() {
     }
 
     return OK;
+}
+
+void SteamConnection::_add_packet(Packet *packet) {
+    pending_retry_packets.push_back(packet);
+}
+
+Error SteamConnection::send(Packet *packet) {
+    _add_packet(packet);
+    return _send_pending();
 }
 
 bool SteamConnection::operator==(const SteamConnection &other) {
