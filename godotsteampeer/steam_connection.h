@@ -15,6 +15,11 @@ using namespace godot;
 class SteamConnection : public RefCounted {
 	GDCLASS(SteamConnection, RefCounted)
 
+    enum ChannelManagement {
+        PING_CHANNEL,
+        SIZE
+    };
+
 public:
 	struct Packet {
         uint8_t data[MAX_STEAM_PACKET_SIZE];

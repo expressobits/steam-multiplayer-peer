@@ -6,14 +6,13 @@
 
 // Include Steamworks API headers
 #include "map"
-#include "steam_connection.h"
 #include "steam/steam_api.h"
 #include "steam/steamnetworkingfakeip.h"
+#include "steam_connection.h"
 
 using namespace godot;
 
 #define MAX_PLAYERS_PER_SERVER 16
-
 
 class SteamMultiplayerPeer : public MultiplayerPeerExtension {
 	GDCLASS(SteamMultiplayerPeer, MultiplayerPeerExtension)
@@ -30,6 +29,7 @@ private:
 	_FORCE_INLINE_ bool _is_active() const { return active_mode != MODE_NONE; }
 	HashMap<int, uint64> hosts;
 	SteamID steam_id = SteamID();
+	int32_t target_peer = -1;
 
 protected:
 	static void _bind_methods();
@@ -97,14 +97,51 @@ public:
 	Error connect_p2p(long identity_remote, int n_remote_virtual_port, Array options);
 	bool get_identity(SteamNetworkingIdentity *p_identity);
 	const SteamNetworkingConfigValue_t *convert_options_array(Array options);
+	Ref<SteamConnection> get_connection_by_peer(int peer_id);
 	void add_connection_peer(const SteamID &steamId, HSteamNetConnection connection, int peer_id);
 	void add_pending_peer(const SteamID &steamId, HSteamNetConnection connection);
 
+	uint64_t get_steam64_from_peer_id(int peer);    //Steam64 is a Steam ID
+    int get_peer_id_from_steam64(uint64_t steamid);
+    int get_peer_id_from_steam_id(SteamID& steamid) const;
+
+    Dictionary get_peer_map();
+
+	// Nagle's Algorithm: Inhibit the sending of new TCP segments, when new outgoing data arrives from the user,
+	// if any previously transmitted data on the connection remains unacknowledged
+	//
+	// Exists to reduce small packets and avoid counterproductive overhead
+	bool no_nagle = false;
+	void set_no_nagle(bool value) {
+		no_nagle = value;
+	}
+	bool get_no_nagle() {
+		return no_nagle;
+	}
+
+	bool no_delay = false; //What?
+	void set_no_delay(bool value) {
+		no_delay = value;
+	}
+	bool get_no_delay() {
+		return no_delay;
+	}
+
+	bool as_relay = false; //Again, what?
+	void set_as_relay(bool value) {
+		as_relay = value;
+	}
+	bool get_as_relay() {
+		return as_relay;
+	}
+
 private:
 	HashMap<int64_t, Ref<SteamConnection>> connections_by_steamId64;
-    HashMap<int, Ref<SteamConnection>> peerId_to_steamId;
+	HashMap<int, Ref<SteamConnection>> peerId_to_steamId;
 	HSteamListenSocket listen_socket;
-	List<SteamConnection::Packet*> incoming_packets;
+	List<SteamConnection::Packet *> incoming_packets;
+	const int _get_steam_transfer_flag();
+
 	// Networking Sockets callbacks /////////
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_authentication_status, SteamNetAuthenticationStatus_t, callback_network_authentication_status);
@@ -112,8 +149,6 @@ private:
 
 	// Networking Utils callbacks ///////////
 	STEAM_CALLBACK(SteamMultiplayerPeer, relay_network_status, SteamRelayNetworkStatus_t, callback_relay_network_status);
-
-
 };
 
 #endif // STEAM_MULTIPLAYER_PEER_H

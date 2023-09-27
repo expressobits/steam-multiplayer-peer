@@ -36,7 +36,24 @@ Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buf
 
 Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffer_size) {
 	ERR_FAIL_COND_V_MSG(!_is_active(), ERR_UNCONFIGURED, "The multiplayer instance isn't currently active.");
-	return Error();
+	int transferMode = _get_steam_transfer_flag();
+    int32_t channel = get_transfer_channel() + SteamConnection::ChannelManagement::SIZE;
+
+    if(target_peer == 0) {
+        Error returnValue = OK;
+        for(HashMap<int64_t, Ref<SteamConnection>>::Iterator E = connections_by_steamId64.begin(); E; ++E) {
+            SteamConnection::Packet* packet = new SteamConnection::Packet(p_buffer, p_buffer_size, transferMode, channel);
+            Error errorCode = E->value->send(packet);
+            if(errorCode != OK) {
+                // DEBUG_DATA_SIGNAL_V("put_packet failed.", errorCode);
+                returnValue = errorCode;
+            }
+        }
+        return returnValue;
+    } else {
+        SteamConnection::Packet* packet = new SteamConnection::Packet(p_buffer, p_buffer_size, transferMode, channel);
+        return get_connection_by_peer(target_peer)->send(packet);
+    }
 }
 
 int32_t SteamMultiplayerPeer::_get_available_packet_count() const { return 0; }
@@ -85,7 +102,9 @@ MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 // void SteamMultiplayerPeer::_set_transfer_mode(
 //     MultiplayerPeer::TransferMode p_mode) {}
 
-void SteamMultiplayerPeer::_set_target_peer(int32_t p_peer) {}
+void SteamMultiplayerPeer::_set_target_peer(int32_t p_peer) {
+	target_peer = p_peer;
+}
 
 int32_t SteamMultiplayerPeer::_get_packet_peer() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), 1, "The multiplayer instance isn't currently active.");
@@ -198,6 +217,27 @@ void SteamMultiplayerPeer::_bind_methods() {
 
 	// NETWORKING UTILS SIGNALS /////////////////
 	ADD_SIGNAL(MethodInfo("relay_network_status", PropertyInfo(Variant::INT, "available"), PropertyInfo(Variant::INT, "ping_measurement"), PropertyInfo(Variant::INT, "available_config"), PropertyInfo(Variant::INT, "available_relay"), PropertyInfo(Variant::STRING, "debug_message")));
+}
+
+const int SteamMultiplayerPeer::_get_steam_transfer_flag() {
+    MultiplayerPeer::TransferMode transfer_mode = get_transfer_mode();
+
+    int32_t flags = (k_nSteamNetworkingSend_NoNagle * no_nagle) | (k_nSteamNetworkingSend_NoDelay * no_delay);//interesting use
+
+    switch(transfer_mode) {
+    case TransferMode::TRANSFER_MODE_RELIABLE:
+        return k_nSteamNetworkingSend_Reliable | flags;
+        break;
+    case TransferMode::TRANSFER_MODE_UNRELIABLE:
+        return k_nSteamNetworkingSend_Unreliable | flags;
+        break;
+    case TransferMode::TRANSFER_MODE_UNRELIABLE_ORDERED:
+        //Unreliable order not supported here!
+        return k_nSteamNetworkingSend_Reliable | flags;
+        break;
+    }
+
+    ERR_FAIL_V_MSG(-1, "Flags error. Switch fallthrough in _get_steam_transfer_flag");
 }
 
 // NETWORKING SOCKETS CALLBACKS /////////////////
@@ -352,6 +392,13 @@ const SteamNetworkingConfigValue_t *SteamMultiplayerPeer::convert_options_array(
 	return option_array;
 }
 
+Ref<SteamConnection> SteamMultiplayerPeer::get_connection_by_peer(int peer_id) {
+    if(peerId_to_steamId.has(peer_id))
+        return peerId_to_steamId[peer_id];
+
+    return nullptr;
+}
+
 void SteamMultiplayerPeer::add_connection_peer(const SteamID &steam_id, HSteamNetConnection connection, int peer_id) {
 	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
 
@@ -372,4 +419,37 @@ void SteamMultiplayerPeer::add_connection_peer(const SteamID &steam_id, HSteamNe
 
 void SteamMultiplayerPeer::add_pending_peer(const SteamID &steamId, HSteamNetConnection connection) {
 	add_connection_peer(steamId, connection, -1);
+}
+
+uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(int peer) {
+    if(peer == this->unique_id) {
+        return SteamUser()->GetSteamID().ConvertToUint64();
+    } else if(peerId_to_steamId.find(peer) == peerId_to_steamId.end()) {
+        return peerId_to_steamId[peer]->steam_id.to_int();
+    } else return -1;
+}
+
+int SteamMultiplayerPeer::get_peer_id_from_steam64(uint64_t steamid) {
+    if(steamid == SteamUser()->GetSteamID().ConvertToUint64()) {
+        return this->unique_id;
+    } else if(connections_by_steamId64.has(steamid)) {
+        return connections_by_steamId64[steamid]->peer_id;
+    } else return -1;
+}
+
+//Should this be by reference?
+int SteamMultiplayerPeer::get_peer_id_from_steam_id(SteamID& steamid) const {
+    if(steamid == SteamID(SteamUser()->GetSteamID())) {
+        return this->unique_id;
+    } else if(connections_by_steamId64.has(steamid.to_int())) {
+        return connections_by_steamId64[steamid.to_int()]->peer_id;
+    } else return -1;
+}
+
+Dictionary SteamMultiplayerPeer::get_peer_map() {
+    Dictionary output;
+    for(HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
+        output[E->value->peer_id] = E->value->steam_id.to_int();
+    }
+    return output;
 }
