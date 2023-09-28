@@ -40,7 +40,7 @@ public:
 
 	bool m_bActive;					// Is this slot in use? Or is it available for new connections?
 	SteamID steam_id;				// What is the steamid of the player?
-	HSteamNetConnection connection;    // The handle for the connection to the player
+	HSteamNetConnection steam_connection;    // The handle for the connection to the player
 	uint64 m_ulTickCountLastData;	// What was the last time we got data from the player?
     int peer_id;
     uint64_t last_msg_timestamp;

@@ -11,7 +11,7 @@ EResult SteamConnection::_raw_send(Packet* packet) {
     //     }
     // }
     int64 *pOutMessageNumber;
-    return SteamNetworkingSockets()->SendMessageToConnection(connection, packet->data, packet->size, packet->transfer_mode, pOutMessageNumber);
+    return SteamNetworkingSockets()->SendMessageToConnection(steam_connection, packet->data, packet->size, packet->transfer_mode, pOutMessageNumber);
     // return SteamNetworkingMessages()->SendMessageToUser(networkIdentity, packet->data, packet->size, packet->transfer_mode, packet->channel);
 
 }
@@ -64,7 +64,7 @@ SteamConnection::SteamConnection(SteamID steam_id) {
 }
 
 SteamConnection::~SteamConnection() {
-	SteamNetworkingSockets()->CloseConnection(this->connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic,"Disconnect Default!", true);
+	SteamNetworkingSockets()->CloseConnection(this->steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic,"Disconnect Default!", true);
     // while(pending_retry_packets.size()) {   //zero is falsy in C++
     //     delete pending_retry_packets.front()->get();
     //     pending_retry_packets.pop_front();

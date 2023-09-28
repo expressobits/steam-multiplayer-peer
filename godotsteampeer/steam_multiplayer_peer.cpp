@@ -103,8 +103,7 @@ MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), TRANSFER_MODE_RELIABLE, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, TRANSFER_MODE_RELIABLE, "No pending packets, cannot get transfer mode.");
 
-	if (incoming_packets.front()->get()->transfer_mode &
-			k_nSteamNetworkingSend_Reliable) {
+	if (incoming_packets.front()->get()->transfer_mode & k_nSteamNetworkingSend_Reliable) {
 		return TRANSFER_MODE_RELIABLE;
 	} else {
 		return TRANSFER_MODE_UNRELIABLE;
@@ -146,9 +145,18 @@ void SteamMultiplayerPeer::_close() {
 	if (!_is_active()) {
 		return;
 	}
-	if (_is_server()) {
+	if (_is_server() && connection_status == CONNECTION_CONNECTED) {
 		close_listen_socket();
+	} else {
+		for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
+			close_connection(E->value);
+		}
+		
 	}
+
+	// TODO On Enet disconnect all peers with
+	// peer_disconnect_now(0);
+
 	peerId_to_steamId.clear();
 	connections_by_steamId64.clear();
 	active_mode = MODE_NONE;
@@ -185,7 +193,7 @@ MultiplayerPeer::ConnectionStatus SteamMultiplayerPeer::_get_connection_status()
 
 bool SteamMultiplayerPeer::close_listen_socket() {
 	if (SteamNetworkingSockets() == NULL) {
-		UtilityFunctions::printerr("Fail to close listen socket ", listen_socket);
+		UtilityFunctions::printerr("SteamNetworkingSockets is null!");
 		return false;
 	}
 	if (!SteamNetworkingSockets()->CloseListenSocket(listen_socket)) {
@@ -193,6 +201,19 @@ bool SteamMultiplayerPeer::close_listen_socket() {
 		return false;
 	}
 	UtilityFunctions::print("Success for close listen socket ", listen_socket);
+	return true;
+}
+
+bool SteamMultiplayerPeer::close_connection(const Ref<SteamConnection> connection) {
+	if (SteamNetworkingSockets() == NULL) {
+		UtilityFunctions::printerr("SteamNetworkingSockets is null!");
+		return false;
+	}
+	if (!SteamNetworkingSockets()->CloseConnection(connection->steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic, "Failed to accept connection", false)) {
+		UtilityFunctions::printerr("Fail to close connection ", connection);
+		return false;
+	}
+	UtilityFunctions::print("Success for close connection socket ", connection);
 	return true;
 }
 
@@ -431,7 +452,7 @@ void SteamMultiplayerPeer::add_connection_peer(const SteamID &steam_id, HSteamNe
 	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
 
 	Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steam_id)));
-	connection_data->connection = connection;
+	connection_data->steam_connection = connection;
 	connection_data->peer_id = peer_id;
 	connections_by_steamId64[steam_id.to_int()] = connection_data;
 
