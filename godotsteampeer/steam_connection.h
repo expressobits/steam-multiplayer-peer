@@ -65,6 +65,7 @@ public:
     // void broadcast(enet_uint8 p_channel, ENetPacket *p_packet);
 	bool operator==(const SteamConnection &data);
     Error send(Packet* packet);
+    void flush();
 	SteamConnection(SteamID steam_id);
 	SteamConnection() {}
 	~SteamConnection();

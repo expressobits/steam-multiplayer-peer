@@ -27,7 +27,6 @@ private:
 	Mode active_mode = MODE_NONE;
 	uint32_t unique_id = 0;
 	_FORCE_INLINE_ bool _is_active() const { return active_mode != MODE_NONE; }
-	HashMap<int, uint64> hosts;
 	SteamID steam_id = SteamID();
 	int32_t target_peer = -1;
 

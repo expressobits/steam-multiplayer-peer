@@ -145,17 +145,20 @@ void SteamMultiplayerPeer::_close() {
 	if (!_is_active()) {
 		return;
 	}
-	if (_is_server() && connection_status == CONNECTION_CONNECTED) {
-		close_listen_socket();
-	} else {
-		for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
-			close_connection(E->value);
-		}
-		
+	if (connection_status != CONNECTION_CONNECTED) {
+		return;
 	}
 
-	// TODO On Enet disconnect all peers with
-	// peer_disconnect_now(0);
+	for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
+		const Ref<SteamConnection> connection = E->value;
+		// TODO On Enet disconnect all peers with
+		// peer_disconnect_now(0);
+		close_connection(connection);
+	}
+
+	if (_is_server()) {
+		close_listen_socket();
+	}
 
 	peerId_to_steamId.clear();
 	connections_by_steamId64.clear();
@@ -167,6 +170,27 @@ void SteamMultiplayerPeer::_close() {
 
 void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
 	ERR_FAIL_COND(!_is_active() || !peerId_to_steamId.has(p_peer));
+	Ref<SteamConnection> connection = get_connection_by_peer(p_peer);
+	close_connection(connection);
+
+	connection->flush();
+	// peerId_to_steamId[p_peer]->peer_disconnect(0); // Will be removed during next poll.
+	if (active_mode == MODE_CLIENT || active_mode == MODE_SERVER) {
+		get_connection_by_peer(0)->flush();
+	} else {
+		// ERR_FAIL_COND(!hosts.has(p_peer));
+		// hosts[p_peer]->flush();
+	}
+	if (p_force) {
+		// peers.erase(p_peer);
+		// if (hosts.has(p_peer)) {
+		// 	hosts.erase(p_peer);
+		// }
+		if (active_mode == MODE_CLIENT) {
+			connections_by_steamId64.clear(); // Avoid flushing again.
+			close();
+		}
+	}
 	//TODO - Implement this method
 	UtilityFunctions::printerr("_disconnect_peer not implemented p_peer=", p_peer, " p_force=", p_force);
 }
@@ -209,6 +233,10 @@ bool SteamMultiplayerPeer::close_connection(const Ref<SteamConnection> connectio
 		UtilityFunctions::printerr("SteamNetworkingSockets is null!");
 		return false;
 	}
+	if (connection->steam_connection == k_HSteamNetConnection_Invalid) {
+		UtilityFunctions::printerr("Steam Connection is invalid!");
+		return false;
+	}
 	if (!SteamNetworkingSockets()->CloseConnection(connection->steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic, "Failed to accept connection", false)) {
 		UtilityFunctions::printerr("Fail to close connection ", connection);
 		return false;
@@ -239,11 +267,13 @@ Error SteamMultiplayerPeer::connect_p2p(long identity_remote, int n_remote_virtu
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CONNECT;
 	}
+	unique_id = generate_unique_id();
+	options.insert(0, unique_id);
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	SteamNetworkingIdentity p_remote_id;
 	p_remote_id.SetSteamID64(identity_remote);
 	active_mode = MODE_CLIENT;
-	unique_id = generate_unique_id();
+	
 	listen_socket = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
 	delete[] these_options;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTING;
@@ -336,7 +366,7 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 			SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false);
 			return;
 		}
-		add_pending_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
+		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, -1);
 
 		// No empty slots.  Server full!
 		UtilityFunctions::print("Rejecting connection; server full");
