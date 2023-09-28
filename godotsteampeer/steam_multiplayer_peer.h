@@ -139,8 +139,15 @@ private:
 	HashMap<int64_t, Ref<SteamConnection>> connections_by_steamId64;
 	HashMap<int, Ref<SteamConnection>> peerId_to_steamId;
 	HSteamListenSocket listen_socket;
+
+	//TODO: Add steam_connection.h and include it. Note that "new" may be a problem, and Godot
+    //may prefer we use a Ref<>, or failing that, Stroustrup would prefer a unique pointer of
+    //some kind.
+    // SteamConnection::Packet *next_send_packet = new SteamConnection::Packet;
+    SteamConnection::Packet *next_received_packet = new SteamConnection::Packet;    // gets deleted at the very first get_packet request
 	List<SteamConnection::Packet *> incoming_packets;
 	const int _get_steam_transfer_flag();
+	ConnectionStatus connection_status = ConnectionStatus::CONNECTION_DISCONNECTED;
 
 	// Networking Sockets callbacks /////////
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
