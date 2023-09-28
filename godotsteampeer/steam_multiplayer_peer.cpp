@@ -41,6 +41,7 @@ Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buf
 	return OK;
 }
 
+// REVIEW many differences for EnetPeer
 Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffer_size) {
 	ERR_FAIL_COND_V_MSG(!_is_active(), ERR_UNCONFIGURED, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(connection_status != CONNECTION_CONNECTED, ERR_UNCONFIGURED, "The multiplayer instance isn't currently connected to any server or client.");

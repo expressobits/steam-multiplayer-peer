@@ -61,6 +61,8 @@ protected:
 	static void _bind_methods();
 
 public:
+    // REVIEW Enetpeer contains broadcast method (Research for method in steam sockets)
+    // void broadcast(enet_uint8 p_channel, ENetPacket *p_packet);
 	bool operator==(const SteamConnection &data);
     Error send(Packet* packet);
 	SteamConnection(SteamID steam_id);
