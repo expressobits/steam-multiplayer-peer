@@ -88,8 +88,14 @@ int32_t SteamMultiplayerPeer::_get_max_packet_size() const {
 int32_t SteamMultiplayerPeer::_get_packet_channel() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), TRANSFER_MODE_RELIABLE, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, TRANSFER_MODE_RELIABLE, "No pending packets, cannot get channel.");
-
 	return incoming_packets.front()->get()->channel;
+
+	// REVIEW SYSCH_MAX Use on EnetPeer
+	// int ch = incoming_packets.front()->get()->channel;
+	// if (ch >= SYSCH_MAX) { // First 2 channels are reserved.
+	// 	return ch - SYSCH_MAX + 1;
+	// }
+	// return 0;
 }
 
 MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
