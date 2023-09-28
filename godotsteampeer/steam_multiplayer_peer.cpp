@@ -66,7 +66,9 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 	}
 }
 
-int32_t SteamMultiplayerPeer::_get_available_packet_count() const { return 0; }
+int32_t SteamMultiplayerPeer::_get_available_packet_count() const {
+	return incoming_packets.size();
+}
 
 int32_t SteamMultiplayerPeer::_get_max_packet_size() const {
 	return k_cbMaxSteamNetworkingSocketsMessageSizeSend;
@@ -151,7 +153,7 @@ void SteamMultiplayerPeer::_close() {
 void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
 	ERR_FAIL_COND(!_is_active() || !peerId_to_steamId.has(p_peer));
 	//TODO - Implement this method
-	UtilityFunctions::printerr("_disconnect_peer not implemented p_peer=",p_peer, " p_force=",p_force);
+	UtilityFunctions::printerr("_disconnect_peer not implemented p_peer=", p_peer, " p_force=", p_force);
 }
 
 int32_t SteamMultiplayerPeer::_get_unique_id() const {
