@@ -1,15 +1,16 @@
 #include "steam_connection.h"
+#include <godot_cpp/variant/utility_functions.hpp>
 
 void SteamConnection::_bind_methods() {
 }
 
 EResult SteamConnection::_raw_send(Packet *packet) {
-	// if(packet->channel == ChannelManagement::PING_CHANNEL) {
-	//     if(packet->size != sizeof(PingPayload)) {
-	//         Steam::get_singleton()->steamworksError("Error: This ping is the wrong size, rejecting");
-	//         return k_EResultFail;
-	//     }
-	// }
+	if(packet->channel == ChannelManagement::PING_CHANNEL) {
+	    if(packet->size != sizeof(PingPayload)) {
+	        UtilityFunctions::printerr("Error: This ping is the wrong size, rejecting");
+	        return k_EResultFail;
+	    }
+	}
 	int64 *pOutMessageNumber;
 	return SteamNetworkingSockets()->SendMessageToConnection(steam_connection, packet->data, packet->size, packet->transfer_mode, pOutMessageNumber);
 	// return SteamNetworkingMessages()->SendMessageToUser(networkIdentity, packet->data, packet->size, packet->transfer_mode, packet->channel);
@@ -51,7 +52,7 @@ Error SteamConnection::send(Packet *packet) {
 }
 
 void SteamConnection::flush() {
-    ERR_FAIL_COND_MSG(steam_connection == k_HSteamNetConnection_Invalid, "The Steam Connections is invalid for flush!");
+	ERR_FAIL_COND_MSG(steam_connection == k_HSteamNetConnection_Invalid, "The Steam Connections is invalid for flush!");
 	SteamNetworkingSockets()->FlushMessagesOnConnection(steam_connection);
 }
 
@@ -73,6 +74,18 @@ SteamConnection::~SteamConnection() {
 	//     delete pending_retry_packets.front()->get();
 	//     pending_retry_packets.pop_front();
 	// }
+}
+
+Error SteamConnection::ping(const PingPayload &p) {
+	last_msg_timestamp = Time::get_singleton()->get_ticks_msec(); //only ping once per maxDeltaT time
+
+	Packet *packet = new Packet((void *)&p, sizeof(PingPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE, PING_CHANNEL);
+	return send(packet);
+}
+
+Error SteamConnection::ping() {
+	PingPayload p = PingPayload();
+	return ping(p);
 }
 
 // Long but simple: just return the type of the EResult as a Godot String

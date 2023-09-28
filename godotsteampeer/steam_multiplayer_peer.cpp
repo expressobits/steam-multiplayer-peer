@@ -21,8 +21,6 @@ SteamMultiplayerPeer::SteamMultiplayerPeer() :
 
 		// Networking Utils callbacks ///////////////
 		callback_relay_network_status(this, &SteamMultiplayerPeer::relay_network_status) {
-	// int32_t id =SteamUser()->GetSteamID().ConvertToUint64();
-	// UtilityFunctions::print(id);
 }
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {
@@ -268,7 +266,7 @@ Error SteamMultiplayerPeer::connect_p2p(long identity_remote, int n_remote_virtu
 		return Error::ERR_CANT_CONNECT;
 	}
 	unique_id = generate_unique_id();
-	options.insert(0, unique_id);
+	// TODO Add peer_id to options for connection
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	SteamNetworkingIdentity p_remote_id;
 	p_remote_id.SetSteamID64(identity_remote);
@@ -366,7 +364,7 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 			SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false);
 			return;
 		}
-		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, -1);
+		add_pending_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
 
 		// No empty slots.  Server full!
 		UtilityFunctions::print("Rejecting connection; server full");
@@ -488,12 +486,12 @@ void SteamMultiplayerPeer::add_connection_peer(const SteamID &steam_id, HSteamNe
 
 	// TODO Remove
 	// NO USE PING On sockets for connection
-	// Error a = connectionData->ping();
+	Error a = connection_data->ping();
 
 	// if(a != OK) {
 	//     DEBUG_DATA_SIGNAL_V("add_connection_peer: Error sending ping. ", a);    //shouldn't this be DEBUG_DATA_COND_SIGNAL_V or something like that?
 	// }
-	// ERR_FAIL_COND_MSG(a != OK, "Message failed to join.");
+	ERR_FAIL_COND_MSG(a != OK, "Message failed to join.");
 }
 
 void SteamMultiplayerPeer::add_pending_peer(const SteamID &steamId, HSteamNetConnection connection) {

@@ -38,6 +38,11 @@ public:
         }
     };
 
+    struct PingPayload {
+        int peer_id = -1;
+        SteamID steam_id = SteamID();
+    };
+
 	bool m_bActive;					// Is this slot in use? Or is it available for new connections?
 	SteamID steam_id;				// What is the steamid of the player?
 	HSteamNetConnection steam_connection;    // The handle for the connection to the player
@@ -66,6 +71,8 @@ public:
 	bool operator==(const SteamConnection &data);
     Error send(Packet* packet);
     void flush();
+    Error ping(const PingPayload &p);
+    Error ping();
 	SteamConnection(SteamID steam_id);
 	SteamConnection() {}
 	~SteamConnection();
