@@ -249,6 +249,14 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CREATE;
 	}
+
+	Array peer_id_array_config_info;
+	peer_id_array_config_info.resize(3);
+	peer_id_array_config_info[0] = Variant("peer_id");
+	peer_id_array_config_info[1] = Variant(1);
+	peer_id_array_config_info[2] = Variant(unique_id);
+	options.append(peer_id_array_config_info);
+
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, 0, nullptr);
 	delete[] these_options;
@@ -267,11 +275,19 @@ Error SteamMultiplayerPeer::connect_p2p(long identity_remote, int n_remote_virtu
 	}
 	unique_id = generate_unique_id();
 	// TODO Add peer_id to options for connection
+
+	Array peer_id_array_config_info;
+	peer_id_array_config_info.resize(3);
+	peer_id_array_config_info[0] = Variant("peer_id");
+	peer_id_array_config_info[1] = Variant(1);
+	peer_id_array_config_info[2] = Variant(unique_id);
+	options.append(peer_id_array_config_info);
+
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	SteamNetworkingIdentity p_remote_id;
 	p_remote_id.SetSteamID64(identity_remote);
 	active_mode = MODE_CLIENT;
-	
+
 	listen_socket = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
 	delete[] these_options;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTING;
@@ -326,6 +342,7 @@ const int SteamMultiplayerPeer::_get_steam_transfer_flag() {
 void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionStatusChangedCallback_t *call_data) {
 	// Connection handle.
 	uint64_t connect_handle = call_data->m_hConn;
+
 	// Full connection info.
 	SteamNetConnectionInfo_t connection_info = call_data->m_info;
 
@@ -353,8 +370,12 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	connection["debug_description"] = connection_info.m_szConnectionDescription;
 	// Previous state (current state is in m_info.m_eState).
 	int old_state = call_data->m_eOldState;
+
+	UtilityFunctions::printerr("user_data=",connection["user_data"]);
+
 	// // Send the data back via signal
 	emit_signal("network_connection_status_changed", connect_handle, connection, old_state);
+	
 
 	// Check if a client has connected
 	if (connection_info.m_hListenSocket && call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None && call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
@@ -498,6 +519,32 @@ void SteamMultiplayerPeer::add_pending_peer(const SteamID &steamId, HSteamNetCon
 	add_connection_peer(steamId, connection, -1);
 }
 
+void SteamMultiplayerPeer::process_ping(const SteamNetworkingMessage_t *msg) {
+	if (sizeof(SteamConnection::PingPayload) != msg->GetSize()) {
+		UtilityFunctions::printerr("Payload is the wrong size for a ping.");
+		return;
+	}
+
+	SteamConnection::PingPayload *data = (SteamConnection::PingPayload *)msg->GetData();
+	if (data->peer_id == -1) {
+		//response to ping
+		SteamConnection::PingPayload p = SteamConnection::PingPayload();
+		p.peer_id = unique_id;
+		p.steam_id.set_from_CSteamID(SteamUser()->GetSteamID());
+		Error err = connections_by_steamId64[msg->m_identityPeer.GetSteamID64()]->ping(p);
+		if (err != OK) {
+			// REVIEW Debug message
+			UtilityFunctions::print("Process Ping: ping failed.", err);
+		}
+	} else {
+		Ref<SteamConnection> connection = connections_by_steamId64[data->steam_id.to_int()];
+		if (connection->peer_id == -1) {
+			set_steam_id_peer(data->steam_id, data->peer_id);
+		}
+		//collect ping data
+	}
+}
+
 uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(int peer) {
 	if (peer == this->unique_id) {
 		return SteamUser()->GetSteamID().ConvertToUint64();
@@ -524,6 +571,24 @@ int SteamMultiplayerPeer::get_peer_id_from_steam_id(SteamID &steamid) const {
 		return connections_by_steamId64[steamid.to_int()]->peer_id;
 	} else
 		return -1;
+}
+
+void SteamMultiplayerPeer::set_steam_id_peer(SteamID steam_id, int peer_id) {
+	ERR_FAIL_COND_MSG(connections_by_steamId64.has(steam_id.to_int()) == false, "Steam ID missing");
+
+	Ref<SteamConnection> con = connections_by_steamId64[steam_id.to_int()];
+	if (con->peer_id == -1) {
+		con->peer_id = peer_id;
+		peerId_to_steamId[peer_id] = con;
+		emit_signal("peer_connected", peer_id);
+	} else if (con->peer_id == peer_id) {
+		//peer already exists, so nothing happens
+	} else {
+		// REVIEW Debug messages
+		UtilityFunctions::print("Steam ID detected with wrong peer ID: ", (long int)steam_id.to_int());
+		UtilityFunctions::print("Peer ID was: ", con->peer_id);
+		UtilityFunctions::print("Trying to set as: ", peer_id);
+	}
 }
 
 Dictionary SteamMultiplayerPeer::get_peer_map() {
