@@ -21,6 +21,8 @@ SteamMultiplayerPeer::SteamMultiplayerPeer() :
 
 		// Networking Utils callbacks ///////////////
 		callback_relay_network_status(this, &SteamMultiplayerPeer::relay_network_status) {
+
+		SteamNetworkingUtils()->InitRelayNetworkAccess();
 }
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {
@@ -268,13 +270,16 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 }
 
 // TODO Rename to create_client? for following enet pattern?
-Error SteamMultiplayerPeer::connect_p2p(long identity_remote, int n_remote_virtual_port, Array options) {
+// REVIEW Problem with godot steam reference (in godot steam use const String& network_identity)
+Error SteamMultiplayerPeer::connect_p2p(uint64_t identity_remote, int n_remote_virtual_port, Array options) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CONNECT;
 	}
 	unique_id = generate_unique_id();
 	// TODO Add peer_id to options for connection
+
+	UtilityFunctions::print("test");
 
 	Array peer_id_array_config_info;
 	peer_id_array_config_info.resize(3);
@@ -291,6 +296,7 @@ Error SteamMultiplayerPeer::connect_p2p(long identity_remote, int n_remote_virtu
 	listen_socket = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
 	delete[] these_options;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTING;
+	UtilityFunctions::print(listen_socket, " p_remote_id=",p_remote_id.GetSteamID64());
 	return Error::OK;
 }
 
@@ -388,8 +394,8 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		add_pending_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
 
 		// No empty slots.  Server full!
-		UtilityFunctions::print("Rejecting connection; server full");
-		SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Server full!", false);
+		// UtilityFunctions::print("Rejecting connection; server full");
+		// SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Server full!", false);
 	}
 }
 

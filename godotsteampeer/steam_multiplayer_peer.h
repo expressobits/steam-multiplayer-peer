@@ -94,7 +94,7 @@ public:
 	bool close_listen_socket();
 	bool close_connection(const Ref<SteamConnection> connection);
 	Error create_listen_socket_p2p(int n_local_virtual_port, Array options);
-	Error connect_p2p(long identity_remote, int n_remote_virtual_port, Array options);
+	Error connect_p2p(uint64_t identity_remote, int n_remote_virtual_port, Array options);
 	bool get_identity(SteamNetworkingIdentity *p_identity);
 	const SteamNetworkingConfigValue_t *convert_options_array(Array options);
 	Ref<SteamConnection> get_connection_by_peer(int peer_id);
