@@ -21,8 +21,6 @@ SteamMultiplayerPeer::SteamMultiplayerPeer() :
 
 		// Networking Utils callbacks ///////////////
 		callback_relay_network_status(this, &SteamMultiplayerPeer::relay_network_status) {
-
-		SteamNetworkingUtils()->InitRelayNetworkAccess();
 }
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {
@@ -252,19 +250,29 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 		return Error::ERR_CANT_CREATE;
 	}
 
-	Array peer_id_array_config_info;
-	peer_id_array_config_info.resize(3);
-	peer_id_array_config_info[0] = Variant("peer_id");
-	peer_id_array_config_info[1] = Variant(1);
-	peer_id_array_config_info[2] = Variant(unique_id);
-	options.append(peer_id_array_config_info);
+	SteamNetworkingUtils()->InitRelayNetworkAccess();
+
+	unique_id = 1;
+
+	// Array peer_id_array_config_info;
+	// peer_id_array_config_info.resize(3);
+	// peer_id_array_config_info[0] = Variant(0);
+	// peer_id_array_config_info[1] = Variant(1);
+	// peer_id_array_config_info[2] = Variant((int32_t)unique_id);
+	// options.append(peer_id_array_config_info);
+
+	UtilityFunctions::print(options);
 
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
-	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, 0, nullptr);
-	delete[] these_options;
+	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, options.size(), these_options);
 	UtilityFunctions::print("create_listen_socket_p2p with ", listen_socket);
+	delete[] these_options;
+	if(listen_socket == k_HSteamListenSocket_Invalid)
+	{
+		unique_id = 0;
+		return Error::ERR_CANT_CREATE; 
+	}
 	active_mode = MODE_SERVER;
-	unique_id = 1;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTED;
 	return Error::OK;
 }
@@ -281,20 +289,28 @@ Error SteamMultiplayerPeer::connect_p2p(uint64_t identity_remote, int n_remote_v
 
 	UtilityFunctions::print("test");
 
-	Array peer_id_array_config_info;
-	peer_id_array_config_info.resize(3);
-	peer_id_array_config_info[0] = Variant("peer_id");
-	peer_id_array_config_info[1] = Variant(1);
-	peer_id_array_config_info[2] = Variant(unique_id);
-	options.append(peer_id_array_config_info);
+	SteamNetworkingUtils()->InitRelayNetworkAccess();
+
+	// Array peer_id_array_config_info;
+	// peer_id_array_config_info.resize(3);
+	// peer_id_array_config_info[0] = Variant("peer_id");
+	// peer_id_array_config_info[1] = Variant(1);
+	// peer_id_array_config_info[2] = Variant(unique_id);
+	// options.append(peer_id_array_config_info);
 
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	SteamNetworkingIdentity p_remote_id;
 	p_remote_id.SetSteamID64(identity_remote);
-	active_mode = MODE_CLIENT;
-
+	
 	listen_socket = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
 	delete[] these_options;
+	if(listen_socket == k_HSteamListenSocket_Invalid)
+	{
+		unique_id = 0;
+		return Error::ERR_CANT_CREATE; 
+	}
+
+	active_mode = MODE_CLIENT;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTING;
 	UtilityFunctions::print(listen_socket, " p_remote_id=",p_remote_id.GetSteamID64());
 	return Error::OK;
@@ -443,16 +459,16 @@ void SteamMultiplayerPeer::networking_fake_ip_result(SteamNetworkingFakeIPResult
 //
 //! A struct used to describe our readiness to use the relay network.
 void SteamMultiplayerPeer::relay_network_status(SteamRelayNetworkStatus_t *call_data) {
-	int available = call_data->m_eAvail;
-	int ping_measurement = call_data->m_bPingMeasurementInProgress;
-	int available_config = call_data->m_eAvailNetworkConfig;
-	int available_relay = call_data->m_eAvailAnyRelay;
-	char *debug_message = new char[256];
-	sprintf(debug_message, "%s", call_data->m_debugMsg);
-	//	debug_message = call_data->m_debugMsg;
-	emit_signal("relay_network_status", available, ping_measurement,
-			available_config, available_relay, debug_message);
-	delete[] debug_message;
+	// int available = call_data->m_eAvail;
+	// int ping_measurement = call_data->m_bPingMeasurementInProgress;
+	// int available_config = call_data->m_eAvailNetworkConfig;
+	// int available_relay = call_data->m_eAvailAnyRelay;
+	// char *debug_message = new char[256];
+	// sprintf(debug_message, "%s", call_data->m_debugMsg);
+	// //	debug_message = call_data->m_debugMsg;
+	// emit_signal("relay_network_status", available, ping_measurement,
+	// 		available_config, available_relay, debug_message);
+	// delete[] debug_message;
 }
 
 // GODOT MULTIPLAYER PEER UTILS  ///////////////////
