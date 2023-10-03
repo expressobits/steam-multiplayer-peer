@@ -243,6 +243,11 @@ bool SteamMultiplayerPeer::close_connection(const Ref<SteamConnection> connectio
 	return true;
 }
 
+void DebugOutputFunction(ESteamNetworkingSocketsDebugOutputType nType, const char *pszMsg )
+{
+	UtilityFunctions::print(pszMsg);
+}
+
 // TODO Rename to create_server? for following enet pattern?
 Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, Array options) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
@@ -251,6 +256,8 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 	}
 
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
+
+	// SteamNetworkingUtils()->SetDebugOutputFunction(ESteamNetworkingSocketsDebugOutputType::k_ESteamNetworkingSocketsDebugOutputType_Everything, DebugOutputFunction);
 
 	unique_id = 1;
 
@@ -321,9 +328,15 @@ bool SteamMultiplayerPeer::get_identity(SteamNetworkingIdentity *p_identity) {
 }
 
 void SteamMultiplayerPeer::_bind_methods() {
+
+
 	// ClassDB::bind_method(D_METHOD("close_listen_socket"), &SteamMultiplayerPeer::close_listen_socket);
 	ClassDB::bind_method(D_METHOD("create_listen_socket_p2p", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::create_listen_socket_p2p);
 	ClassDB::bind_method(D_METHOD("connect_p2p", "identity_remote", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::connect_p2p);
+	ClassDB::bind_method(D_METHOD("set_listen_socket", "listen_socket"), &SteamMultiplayerPeer::set_listen_socket);
+	ClassDB::bind_method(D_METHOD("get_listen_socket"), &SteamMultiplayerPeer::get_listen_socket);
+
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "listen_socket"), "set_listen_socket", "get_listen_socket");
 
 	// NETWORKING SOCKETS SIGNALS ///////////////
 	ADD_SIGNAL(MethodInfo("network_connection_status_changed", PropertyInfo(Variant::INT, "connect_handle"), PropertyInfo(Variant::DICTIONARY, "connection"), PropertyInfo(Variant::INT, "old_state")));
@@ -611,6 +624,14 @@ void SteamMultiplayerPeer::set_steam_id_peer(SteamID steam_id, int peer_id) {
 		UtilityFunctions::print("Peer ID was: ", con->peer_id);
 		UtilityFunctions::print("Trying to set as: ", peer_id);
 	}
+}
+
+void SteamMultiplayerPeer::set_listen_socket(const int listen_socket) {
+	this->listen_socket = listen_socket;
+}
+
+int SteamMultiplayerPeer::get_listen_socket() const {
+	return listen_socket;
 }
 
 Dictionary SteamMultiplayerPeer::get_peer_map() {

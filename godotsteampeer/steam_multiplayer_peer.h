@@ -108,6 +108,9 @@ public:
     int get_peer_id_from_steam_id(SteamID& steamid) const;
 	void set_steam_id_peer(SteamID steam_id, int peer_id);
 
+	void set_listen_socket(const int listen_socket);
+	int get_listen_socket() const;
+
     Dictionary get_peer_map();
 
 	// Nagle's Algorithm: Inhibit the sending of new TCP segments, when new outgoing data arrives from the user,
