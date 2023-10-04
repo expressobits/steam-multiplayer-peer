@@ -268,7 +268,7 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 	// peer_id_array_config_info[2] = Variant((int32_t)unique_id);
 	// options.append(peer_id_array_config_info);
 
-	UtilityFunctions::print(options);
+	// UtilityFunctions::print(options);
 
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, options.size(), these_options);
@@ -293,8 +293,6 @@ Error SteamMultiplayerPeer::connect_p2p(uint64_t identity_remote, int n_remote_v
 	}
 	unique_id = generate_unique_id();
 	// TODO Add peer_id to options for connection
-
-	UtilityFunctions::print("test");
 
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
 
