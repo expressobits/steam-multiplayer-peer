@@ -243,8 +243,7 @@ bool SteamMultiplayerPeer::close_connection(const Ref<SteamConnection> connectio
 	return true;
 }
 
-void DebugOutputFunction(ESteamNetworkingSocketsDebugOutputType nType, const char *pszMsg )
-{
+void DebugOutputFunction(ESteamNetworkingSocketsDebugOutputType nType, const char *pszMsg) {
 	UtilityFunctions::print(pszMsg);
 }
 
@@ -274,10 +273,9 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, options.size(), these_options);
 	UtilityFunctions::print("create_listen_socket_p2p with ", listen_socket);
 	delete[] these_options;
-	if(listen_socket == k_HSteamListenSocket_Invalid)
-	{
+	if (listen_socket == k_HSteamListenSocket_Invalid) {
 		unique_id = 0;
-		return Error::ERR_CANT_CREATE; 
+		return Error::ERR_CANT_CREATE;
 	}
 	active_mode = MODE_SERVER;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTED;
@@ -296,28 +294,29 @@ Error SteamMultiplayerPeer::connect_p2p(uint64_t identity_remote, int n_remote_v
 
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
 
-	// Array peer_id_array_config_info;
-	// peer_id_array_config_info.resize(3);
-	// peer_id_array_config_info[0] = Variant("peer_id");
-	// peer_id_array_config_info[1] = Variant(1);
-	// peer_id_array_config_info[2] = Variant(unique_id);
-	// options.append(peer_id_array_config_info);
+	Array peer_id_array_config_info;
+	peer_id_array_config_info.resize(3);
+	peer_id_array_config_info[0] = Variant(k_ESteamNetworkingConfig_ConnectionUserData);
+	peer_id_array_config_info[1] = Variant(1);
+	peer_id_array_config_info[2] = Variant(unique_id);
+	options.append(peer_id_array_config_info);
 
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
+
 	SteamNetworkingIdentity p_remote_id;
 	p_remote_id.SetSteamID64(identity_remote);
-	
+
 	listen_socket = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
+	
 	delete[] these_options;
-	if(listen_socket == k_HSteamListenSocket_Invalid)
-	{
+	if (listen_socket == k_HSteamListenSocket_Invalid) {
 		unique_id = 0;
-		return Error::ERR_CANT_CREATE; 
+		return Error::ERR_CANT_CREATE;
 	}
 
 	active_mode = MODE_CLIENT;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTING;
-	UtilityFunctions::print(listen_socket, " p_remote_id=",p_remote_id.GetSteamID64());
+	UtilityFunctions::print(listen_socket, " p_remote_id=", p_remote_id.GetSteamID64());
 	return Error::OK;
 }
 
@@ -326,8 +325,6 @@ bool SteamMultiplayerPeer::get_identity(SteamNetworkingIdentity *p_identity) {
 }
 
 void SteamMultiplayerPeer::_bind_methods() {
-
-
 	// ClassDB::bind_method(D_METHOD("close_listen_socket"), &SteamMultiplayerPeer::close_listen_socket);
 	ClassDB::bind_method(D_METHOD("create_listen_socket_p2p", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::create_listen_socket_p2p);
 	ClassDB::bind_method(D_METHOD("connect_p2p", "identity_remote", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::connect_p2p);
@@ -404,12 +401,14 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	// Previous state (current state is in m_info.m_eState).
 	int old_state = call_data->m_eOldState;
 
-	UtilityFunctions::printerr("user_data=",connection["user_data"]);
+	UtilityFunctions::printerr("user_data=", connection["user_data"]);
 
 	// // Send the data back via signal
 	emit_signal("network_connection_status_changed", connect_handle, connection, old_state);
-	
 
+	// A new connection arrives on a listen socket. m_info.m_hListenSocket will be set, 
+	// m_eOldState = k_ESteamNetworkingConnectionState_None, and m_info.m_eState = k_ESteamNetworkingConnectionState_Connecting.
+	// See AcceptConnection.
 	// Check if a client has connected
 	if (connection_info.m_hListenSocket && call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None && call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
 		EResult res = SteamGameServerNetworkingSockets()->AcceptConnection(call_data->m_hConn);
@@ -423,6 +422,44 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		// No empty slots.  Server full!
 		// UtilityFunctions::print("Rejecting connection; server full");
 		// SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Server full!", false);
+	}
+
+	// A connection you initiated has been accepted by the remote host.
+	// m_eOldState = k_ESteamNetworkingConnectionState_Connecting, and
+	// m_info.m_eState = k_ESteamNetworkingConnectionState_Connected.
+	// TODO Some connections might transition to k_ESteamNetworkingConnectionState_FindingRoute first.
+	if (call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting &&
+			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected) {
+		// Client connection
+		connection_status = CONNECTION_CONNECTED;
+		emit_signal("peer_connected", 1);
+		return;
+	}
+
+	// A connection has been actively rejected or closed by the remote host.
+	// m_eOldState = k_ESteamNetworkingConnectionState_Connecting or k_ESteamNetworkingConnectionState_Connected,
+	// and m_info.m_eState = k_ESteamNetworkingConnectionState_ClosedByPeer. m_info.m_eEndReason and m_info.m_szEndDebug will have more details.
+	// NOTE: upon receiving this callback, you must still destroy the connection using CloseConnection to free up local resources.
+	// (The details passed to the function are not used in this case, since the connection is already closed.)
+	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
+				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connected) &&
+			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_ClosedByPeer) {
+		emit_signal("peer_disconnected", 1);
+		close();
+		return;
+	}
+	
+	// A problem was detected with the connection, and it has been closed by the local host. The most common failure is timeout, 
+	// but other configuration or authentication failures can cause this. m_eOldState = k_ESteamNetworkingConnectionState_Connecting 
+	// or k_ESteamNetworkingConnectionState_Connected, and m_info.m_eState = k_ESteamNetworkingConnectionState_ProblemDetectedLocally. 
+	// m_info.m_eEndReason and m_info.m_szEndDebug will have more details. 
+	// NOTE: upon receiving this callback, you must still destroy the connection using CloseConnection to free up local resources. 
+	// (The details passed to the function are not used in this case, since the connection is already closed.)
+	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
+				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connected) &&
+			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_ProblemDetectedLocally) {
+		close();
+		return;
 	}
 }
 
