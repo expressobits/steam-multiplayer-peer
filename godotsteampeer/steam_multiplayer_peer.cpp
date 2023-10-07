@@ -422,6 +422,14 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		{
 			UtilityFunctions::print("AcceptConnection success! User data =",connection_info.m_nUserData);
 		}
+		SteamNetConnectionInfo_t *pInfo;
+		bool ok = SteamNetworkingSockets()->GetConnectionInfo(connect_handle, pInfo);
+		if(ok)
+		{
+			UtilityFunctions::print("User data from info=", pInfo->m_nUserData);
+		}
+		int64_t user_data = SteamNetworkingSockets()->GetConnectionUserData(connect_handle);
+		UtilityFunctions::print("user_data from get connection user data =", user_data);
 		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int32_t)(connection_info.m_nUserData));
 
 		// No empty slots.  Server full!
@@ -429,11 +437,15 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		// SteamNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Server full!", false);
 	}
 
+	if(connection_info.m_hListenSocket) return;
+	/////// Client callbacks
+
 	// A connection you initiated has been accepted by the remote host.
 	// m_eOldState = k_ESteamNetworkingConnectionState_Connecting, and
 	// m_info.m_eState = k_ESteamNetworkingConnectionState_Connected.
 	// TODO Some connections might transition to k_ESteamNetworkingConnectionState_FindingRoute first.
-	if (call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting &&
+	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
+	 	call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_FindingRoute) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected) {
 		// Client connection
 		connection_status = CONNECTION_CONNECTED;

@@ -13,7 +13,6 @@ EResult SteamConnection::_raw_send(Packet *packet) {
 	}
 	int64 *pOutMessageNumber;
 	return SteamNetworkingSockets()->SendMessageToConnection(steam_connection, packet->data, packet->size, packet->transfer_mode, pOutMessageNumber);
-	//return SteamNetworkingMessages()->SendMessageToUser(networkIdentity, packet->data, packet->size, packet->transfer_mode, packet->channel);
 }
 
 // TODO change to return correct error
