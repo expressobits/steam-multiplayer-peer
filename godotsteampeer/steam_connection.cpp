@@ -5,12 +5,6 @@ void SteamConnection::_bind_methods() {
 }
 
 EResult SteamConnection::_raw_send(Packet *packet) {
-	if(packet->channel == ChannelManagement::PING_CHANNEL) {
-	    if(packet->size != sizeof(PingPayload)) {
-	        UtilityFunctions::printerr("Error: This ping is the wrong size, rejecting");
-	        return k_EResultFail;
-	    }
-	}
 	int64 *pOutMessageNumber;
 	return SteamNetworkingSockets()->SendMessageToConnection(steam_connection, packet->data, packet->size, packet->transfer_mode, pOutMessageNumber);
 }
@@ -73,18 +67,6 @@ SteamConnection::~SteamConnection() {
 	//     delete pending_retry_packets.front()->get();
 	//     pending_retry_packets.pop_front();
 	// }
-}
-
-Error SteamConnection::ping(const PingPayload &p) {
-	last_msg_timestamp = Time::get_singleton()->get_ticks_msec(); //only ping once per maxDeltaT time
-
-	Packet *packet = new Packet((void *)&p, sizeof(PingPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE, PING_CHANNEL);
-	return send(packet);
-}
-
-Error SteamConnection::ping() {
-	PingPayload p = PingPayload();
-	return ping(p);
 }
 
 // Long but simple: just return the type of the EResult as a Godot String
