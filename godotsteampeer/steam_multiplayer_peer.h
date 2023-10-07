@@ -145,6 +145,7 @@ private:
 	HashMap<int64_t, Ref<SteamConnection>> connections_by_steamId64;
 	HashMap<int, Ref<SteamConnection>> peerId_to_steamId;
 	HSteamListenSocket listen_socket;
+	HSteamNetConnection connection;
 
 	//TODO: Add steam_connection.h and include it. Note that "new" may be a problem, and Godot
     //may prefer we use a Ref<>, or failing that, Stroustrup would prefer a unique pointer of

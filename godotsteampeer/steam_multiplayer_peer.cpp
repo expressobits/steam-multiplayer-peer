@@ -296,17 +296,17 @@ Error SteamMultiplayerPeer::connect_p2p(uint64_t identity_remote, int n_remote_v
 	SteamNetworkingIdentity p_remote_id;
 	p_remote_id.SetSteamID64(identity_remote);
 
-	listen_socket = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
+	connection = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
 	
 	delete[] these_options;
-	if (listen_socket == k_HSteamListenSocket_Invalid) {
+	if (connection == k_HSteamNetConnection_Invalid) {
 		unique_id = 0;
 		return Error::ERR_CANT_CREATE;
 	}
 
 	active_mode = MODE_CLIENT;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTING;
-	UtilityFunctions::print(listen_socket, " p_remote_id=", p_remote_id.GetSteamID64());
+	UtilityFunctions::print(connection, " p_remote_id=", p_remote_id.GetSteamID64());
 	return Error::OK;
 }
 
@@ -391,8 +391,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	// Previous state (current state is in m_info.m_eState).
 	int old_state = call_data->m_eOldState;
 
-	UtilityFunctions::printerr("user_data=", connection["user_data"]);
-
 	// // Send the data back via signal
 	emit_signal("network_connection_status_changed", connect_handle, connection, old_state);
 
@@ -412,15 +410,7 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		{
 			UtilityFunctions::print("AcceptConnection success! User data =",connection_info.m_nUserData);
 		}
-		SteamNetConnectionInfo_t *pInfo;
-		bool ok = SteamNetworkingSockets()->GetConnectionInfo(connect_handle, pInfo);
-		if(ok)
-		{
-			UtilityFunctions::print("User data from info=", pInfo->m_nUserData);
-		}
-		int64_t user_data = SteamNetworkingSockets()->GetConnectionUserData(connect_handle);
-		UtilityFunctions::print("user_data from get connection user data =", user_data);
-		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int32_t)(connection_info.m_nUserData));
+		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, 5000);
 
 		// No empty slots.  Server full!
 		// UtilityFunctions::print("Rejecting connection; server full");
@@ -429,6 +419,14 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 
 	if(connection_info.m_hListenSocket) return;
 	/////// Client callbacks
+
+	if (call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None &&
+			call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
+		// Client connection
+		SteamNetworkingSockets()->SetConnectionUserData(call_data->m_hConn, unique_id);
+		return;
+	}
+	
 
 	// A connection you initiated has been accepted by the remote host.
 	// m_eOldState = k_ESteamNetworkingConnectionState_Connecting, and
