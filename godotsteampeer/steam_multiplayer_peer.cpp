@@ -377,7 +377,7 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	SteamNetConnectionInfo_t connection_info = call_data->m_info;
 
 	if (connection_info.m_hListenSocket) {
-		UtilityFunctions::print("m_hListenSocket is =", connection_info.m_hListenSocket);
+		UtilityFunctions::print("m_hListenSocket is = ", connection_info.m_hListenSocket);
 	} else {
 		UtilityFunctions::print("m_hListenSocket is null!");
 	}
@@ -411,17 +411,22 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	// See AcceptConnection.
 	// Check if a client has connected
 	if (connection_info.m_hListenSocket && call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None && call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
-		EResult res = SteamGameServerNetworkingSockets()->AcceptConnection(call_data->m_hConn);
+		UtilityFunctions::print("Trying AcceptConnection...");
+		EResult res = SteamNetworkingSockets()->AcceptConnection(connect_handle);
 		if (res != k_EResultOK) {
-			UtilityFunctions::print("AcceptConnection returned", res);
-			SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false);
+			UtilityFunctions::print("AcceptConnection error! returned", res);
+			SteamNetworkingSockets()->CloseConnection(connect_handle, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false);
 			return;
 		}
-		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int)connection_info.m_nUserData);
+		else
+		{
+			UtilityFunctions::print("AcceptConnection success! User data =",connection_info.m_nUserData);
+		}
+		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int32_t)(connection_info.m_nUserData));
 
 		// No empty slots.  Server full!
 		// UtilityFunctions::print("Rejecting connection; server full");
-		// SteamGameServerNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Server full!", false);
+		// SteamNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Server full!", false);
 	}
 
 	// A connection you initiated has been accepted by the remote host.
