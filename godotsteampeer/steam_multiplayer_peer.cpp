@@ -82,13 +82,22 @@ MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 }
 
 void SteamMultiplayerPeer::_set_transfer_channel(int32_t p_channel) {
+	UtilityFunctions::print("[STEAM PEER] Set transfer channel to ",p_channel);
+}
+
+int32_t SteamMultiplayerPeer::_get_transfer_channel() const {
+	UtilityFunctions::print("[STEAM PEER] Get transfer channel = ",0);
+	return 0;
 }
 
 void SteamMultiplayerPeer::_set_transfer_mode(MultiplayerPeer::TransferMode p_mode) {
+	UtilityFunctions::print("[STEAM PEER] Set transfer mode to ",p_mode);
+	transfer_mode = p_mode;
 }
 
 MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_transfer_mode() const {
-	return TRANSFER_MODE_RELIABLE;;
+	UtilityFunctions::print("[STEAM PEER] Get transfer channel = ",transfer_mode);
+	return transfer_mode;
 }
 
 void SteamMultiplayerPeer::_set_target_peer(int32_t p_peer) {
@@ -211,7 +220,6 @@ void DebugOutputFunction(ESteamNetworkingSocketsDebugOutputType nType, const cha
 	UtilityFunctions::print(pszMsg);
 }
 
-// TODO Rename to create_server? for following enet pattern?
 Error SteamMultiplayerPeer::create_host(int n_local_virtual_port, Array options) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
@@ -237,7 +245,6 @@ Error SteamMultiplayerPeer::create_host(int n_local_virtual_port, Array options)
 	return Error::OK;
 }
 
-// TODO Rename to create_client? for following enet pattern?
 // REVIEW Problem with godot steam reference (in godot steam use const String& network_identity)
 Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote_virtual_port, Array options) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
@@ -262,7 +269,7 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 	p_remote_id.SetSteamID64(identity_remote);
 
 	connection = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
-	
+
 	delete[] these_options;
 	if (connection == k_HSteamNetConnection_Invalid) {
 		unique_id = 0;
@@ -363,15 +370,14 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 			UtilityFunctions::print("AcceptConnection error! returned", res);
 			SteamNetworkingSockets()->CloseConnection(connect_handle, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false);
 			return;
-		}
-		else
-		{
-			UtilityFunctions::print("AcceptConnection success! User data =",connection_info.m_nUserData);
+		} else {
+			UtilityFunctions::print("AcceptConnection success! User data =", connection_info.m_nUserData);
 		}
 		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int32_t)2);
 	}
 
-	if(connection_info.m_hListenSocket) return;
+	if (connection_info.m_hListenSocket)
+		return;
 	/////// Client callbacks
 
 	if (call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None &&
@@ -380,11 +386,10 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		SteamNetworkingSockets()->SetConnectionUserData(call_data->m_hConn, unique_id);
 		return;
 	}
-	
 
 	// A connection you initiated has been accepted by the remote host.
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
-	 	call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_FindingRoute) &&
+				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_FindingRoute) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected) {
 		// Client connection
 		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int32_t)1);
@@ -399,8 +404,8 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		close();
 		return;
 	}
-	
-	// A problem was detected with the connection, and it has been closed by the local host. The most common failure is timeout, 
+
+	// A problem was detected with the connection, and it has been closed by the local host. The most common failure is timeout,
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connected) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_ProblemDetectedLocally) {
@@ -522,9 +527,8 @@ void SteamMultiplayerPeer::add_connection_peer(const SteamID &steam_id, HSteamNe
 	connection_data->peer_id = peer_id;
 	connections_by_steamId64[steam_id.to_int()] = connection_data;
 	peerId_to_steamId[peer_id] = connection;
-	emit_signal("peer_connected", peer_id);
 
-	//set_steam_id_peer(steam_id, peer_id);
+	set_steam_id_peer(steam_id, peer_id);
 }
 
 void SteamMultiplayerPeer::add_pending_peer(const SteamID &steamId, HSteamNetConnection connection) {

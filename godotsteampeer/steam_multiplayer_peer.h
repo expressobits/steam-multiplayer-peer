@@ -29,6 +29,7 @@ private:
 	_FORCE_INLINE_ bool _is_active() const { return active_mode != MODE_NONE; }
 	SteamID steam_id = SteamID();
 	int32_t target_peer = -1;
+	TransferMode transfer_mode = TRANSFER_MODE_RELIABLE;
 
 protected:
 	static void _bind_methods();
@@ -76,7 +77,7 @@ public:
 	// int32_t _get_packet_channel() const;
 	MultiplayerPeer::TransferMode _get_packet_mode() const;
 	void _set_transfer_channel(int32_t p_channel) override;
-	// int32_t _get_transfer_channel() const;
+	int32_t _get_transfer_channel() const;
 	void _set_transfer_mode(MultiplayerPeer::TransferMode p_mode) override;
 	MultiplayerPeer::TransferMode _get_transfer_mode() const override;
 	void _set_target_peer(int32_t p_peer) override;

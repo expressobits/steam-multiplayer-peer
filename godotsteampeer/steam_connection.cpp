@@ -35,8 +35,12 @@ Error SteamConnection::_send_pending() {
 	return OK;
 }
 
-void SteamConnection::_add_packet(Packet *packet) {
+void SteamConnection::_add_packet(SteamPacketPeer *packet) {
+	UtilityFunctions::print("[STEAM PEER] Before size");
+	UtilityFunctions::print(pending_retry_packets.size());
+	UtilityFunctions::print("[STEAM PEER] Before push_back");
 	pending_retry_packets.push_back(packet);
+	UtilityFunctions::print("[STEAM PEER] After push_back");
 }
 
 Error SteamConnection::send(Packet *packet) {
