@@ -242,7 +242,7 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 	Array peer_id_array_config_info;
 	peer_id_array_config_info.resize(3);
 	peer_id_array_config_info[0] = Variant(k_ESteamNetworkingConfig_ConnectionUserData);
-	peer_id_array_config_info[1] = Variant(1);
+	peer_id_array_config_info[1] = Variant(2);
 	peer_id_array_config_info[2] = Variant(unique_id);
 	options.append(peer_id_array_config_info);
 
