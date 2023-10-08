@@ -30,6 +30,8 @@ Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buf
 
 	delete next_received_packet;
 	next_received_packet = incoming_packets.front()->get();
+
+	UtilityFunctions::print("_get_packet", r_buffer_size, " bytes");
 	*r_buffer_size = next_received_packet->size;
 	*r_buffer = (const uint8_t *)(&next_received_packet->data); //REVIEW A pointer to a reference? I feel like this is worthy of more consideration.
 	incoming_packets.pop_front();
@@ -44,6 +46,8 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 	ERR_FAIL_COND_V_MSG(target_peer != 0 && !peerId_to_steamId.has(ABS(target_peer)), ERR_INVALID_PARAMETER, vformat("Invalid target peer: %d", target_peer));
 	ERR_FAIL_COND_V(active_mode == MODE_CLIENT && !peerId_to_steamId.has(1), ERR_BUG);
 	int transferMode = _get_steam_transfer_flag();
+
+	UtilityFunctions::print("_send_packet", p_buffer_size, " bytes");
 
 	if (target_peer == 0) {
 		Error returnValue = OK;
@@ -333,12 +337,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	// Full connection info.
 	SteamNetConnectionInfo_t connection_info = call_data->m_info;
 
-	if (connection_info.m_hListenSocket) {
-		UtilityFunctions::print("m_hListenSocket is = ", connection_info.m_hListenSocket);
-	} else {
-		UtilityFunctions::print("m_hListenSocket is null!");
-	}
-
 	// Move connection info into a dictionary
 	Dictionary connection;
 	char identity[STEAM_BUFFER_SIZE];
@@ -369,28 +367,30 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		} else {
 			UtilityFunctions::print("AcceptConnection success! User data =", connection_info.m_nUserData);
 		}
-		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int32_t)2);
-	}
-
-	if (connection_info.m_hListenSocket)
-		return;
-	/////// Client callbacks
-
-	if (call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None &&
-			call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
-		// Client connection
-		SteamNetworkingSockets()->SetConnectionUserData(call_data->m_hConn, unique_id);
-		return;
+		add_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
 	}
 
 	// A connection you initiated has been accepted by the remote host.
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_FindingRoute) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected) {
-		// Client connection
-		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int32_t)1);
-		return;
+
+		if(_is_server())
+		{
+			// Server correct allocated peer id for steam connection
+			set_steam_id_peer(call_data->m_info.m_identityRemote.GetSteamID(), (int32_t)2);
+		}
+		else
+		{
+			add_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
+			add_peer_for_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int32_t)1);
+		}
 	}
+
+	if (_is_server())
+		return;
+	
+	/////// Client callbacks
 
 	// A connection has been actively rejected or closed by the remote host.
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
@@ -515,20 +515,18 @@ Ref<SteamConnection> SteamMultiplayerPeer::get_connection_by_peer(int peer_id) {
 	return nullptr;
 }
 
-void SteamMultiplayerPeer::add_connection_peer(const SteamID &steam_id, HSteamNetConnection connection, int32_t peer_id) {
+void SteamMultiplayerPeer::add_peer_for_connection(const SteamID &steam_id, HSteamNetConnection connection, int32_t peer_id) {
 	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
-
-	Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steam_id)));
-	connection_data->steam_connection = connection;
-	connection_data->peer_id = peer_id;
-	connections_by_steamId64[steam_id.to_int()] = connection_data;
-	peerId_to_steamId[peer_id] = connection;
 
 	set_steam_id_peer(steam_id, peer_id);
 }
 
-void SteamMultiplayerPeer::add_pending_peer(const SteamID &steamId, HSteamNetConnection connection) {
-	add_connection_peer(steamId, connection, -1);
+void SteamMultiplayerPeer::add_connection(const SteamID &steamId, HSteamNetConnection connection) {
+	ERR_FAIL_COND_MSG(steamId == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
+
+    Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steamId)));
+	connection_data->steam_connection = connection;
+    connections_by_steamId64[steamId.to_int()] = connection_data;
 }
 
 uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(int peer) {
