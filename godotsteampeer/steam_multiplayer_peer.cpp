@@ -82,21 +82,17 @@ MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 }
 
 void SteamMultiplayerPeer::_set_transfer_channel(int32_t p_channel) {
-	UtilityFunctions::print("[STEAM PEER] Set transfer channel to ",p_channel);
 }
 
 int32_t SteamMultiplayerPeer::_get_transfer_channel() const {
-	UtilityFunctions::print("[STEAM PEER] Get transfer channel = ",0);
 	return 0;
 }
 
 void SteamMultiplayerPeer::_set_transfer_mode(MultiplayerPeer::TransferMode p_mode) {
-	UtilityFunctions::print("[STEAM PEER] Set transfer mode to ",p_mode);
 	transfer_mode = p_mode;
 }
 
 MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_transfer_mode() const {
-	UtilityFunctions::print("[STEAM PEER] Get transfer channel = ",transfer_mode);
 	return transfer_mode;
 }
 
