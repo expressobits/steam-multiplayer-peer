@@ -75,9 +75,9 @@ public:
 	// Error _put_packet_script(const PackedByteArray &p_buffer);
 	// int32_t _get_packet_channel() const;
 	MultiplayerPeer::TransferMode _get_packet_mode() const;
-	// void _set_transfer_channel(int32_t p_channel) override;
+	void _set_transfer_channel(int32_t p_channel) override;
 	// int32_t _get_transfer_channel() const;
-	// void _set_transfer_mode(MultiplayerPeer::TransferMode p_mode) override;
+	void _set_transfer_mode(MultiplayerPeer::TransferMode p_mode) override;
 	// MultiplayerPeer::TransferMode _get_transfer_mode() const override;
 	void _set_target_peer(int32_t p_peer) override;
 	int32_t _get_packet_peer() const override;

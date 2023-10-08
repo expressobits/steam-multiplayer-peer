@@ -81,6 +81,12 @@ MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 	}
 }
 
+void SteamMultiplayerPeer::_set_transfer_channel(int32_t p_channel) {
+}
+
+void SteamMultiplayerPeer::_set_transfer_mode(MultiplayerPeer::TransferMode p_mode) {
+}
+
 void SteamMultiplayerPeer::_set_target_peer(int32_t p_peer) {
 	target_peer = p_peer;
 }
