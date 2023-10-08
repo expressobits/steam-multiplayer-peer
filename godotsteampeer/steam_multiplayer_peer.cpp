@@ -410,7 +410,7 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		{
 			UtilityFunctions::print("AcceptConnection success! User data =",connection_info.m_nUserData);
 		}
-		add_connection_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, 5000);
+		add_pending_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
 
 		// No empty slots.  Server full!
 		// UtilityFunctions::print("Rejecting connection; server full");
