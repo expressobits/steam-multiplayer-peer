@@ -6,10 +6,6 @@
 
 using namespace godot;
 
-/////////////////////////////////////////////////
-///// DEFINING CONSTANTS
-/////////////////////////////////////////////////
-//
 // Define Steam API constants
 #define STEAM_BUFFER_SIZE 255
 
@@ -72,21 +68,6 @@ int32_t SteamMultiplayerPeer::_get_max_packet_size() const {
 	return k_cbMaxSteamNetworkingSocketsMessageSizeSend;
 }
 
-// PackedByteArray SteamMultiplayerPeer::_get_packet_script()
-// {
-//     return PackedByteArray();
-// }
-
-// Error SteamMultiplayerPeer::_put_packet_script(const PackedByteArray
-// &p_buffer)
-// {
-//     return Error();
-// }
-
-// int32_t SteamMultiplayerPeer::_get_packet_channel() const {
-// 	return 0;
-// }
-
 MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), TRANSFER_MODE_RELIABLE, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, TRANSFER_MODE_RELIABLE, "No pending packets, cannot get transfer mode.");
@@ -97,16 +78,6 @@ MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 		return TRANSFER_MODE_UNRELIABLE;
 	}
 }
-
-// void SteamMultiplayerPeer::_set_transfer_channel(int32_t p_channel) {}
-
-// int32_t SteamMultiplayerPeer::_get_transfer_channel() const
-// {
-//     return 0;
-// }
-
-// void SteamMultiplayerPeer::_set_transfer_mode(
-//     MultiplayerPeer::TransferMode p_mode) {}
 
 void SteamMultiplayerPeer::_set_target_peer(int32_t p_peer) {
 	target_peer = p_peer;
@@ -179,21 +150,12 @@ void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
 			close();
 		}
 	}
-	//TODO - Implement this method
-	UtilityFunctions::printerr("_disconnect_peer not implemented p_peer=", p_peer, " p_force=", p_force);
 }
 
 int32_t SteamMultiplayerPeer::_get_unique_id() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), 0, "The multiplayer instance isn't currently active.");
 	return unique_id;
 }
-
-// void SteamMultiplayerPeer::_set_refuse_new_connections(bool p_enable) {}
-
-// bool SteamMultiplayerPeer::_is_refusing_new_connections() const
-// {
-//     return false;
-// }
 
 bool SteamMultiplayerPeer::_is_server_relay_supported() const {
 	return active_mode == MODE_SERVER || active_mode == MODE_CLIENT;
@@ -249,15 +211,6 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 	// SteamNetworkingUtils()->SetDebugOutputFunction(ESteamNetworkingSocketsDebugOutputType::k_ESteamNetworkingSocketsDebugOutputType_Everything, DebugOutputFunction);
 
 	unique_id = 1;
-
-	// Array peer_id_array_config_info;
-	// peer_id_array_config_info.resize(3);
-	// peer_id_array_config_info[0] = Variant(k_ESteamNetworkingConfig_ConnectionUserData);
-	// peer_id_array_config_info[1] = Variant(1);
-	// peer_id_array_config_info[2] = Variant(unique_id);
-	// options.append(peer_id_array_config_info);
-
-	// UtilityFunctions::print(options);
 
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, options.size(), these_options);
@@ -388,16 +341,10 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	connection["end_reason"] = connection_info.m_eEndReason;
 	connection["end_debug"] = connection_info.m_szEndDebug;
 	connection["debug_description"] = connection_info.m_szConnectionDescription;
-	// Previous state (current state is in m_info.m_eState).
 	int old_state = call_data->m_eOldState;
-
-	// // Send the data back via signal
 	emit_signal("network_connection_status_changed", connect_handle, connection, old_state);
 
-	// A new connection arrives on a listen socket. m_info.m_hListenSocket will be set, 
-	// m_eOldState = k_ESteamNetworkingConnectionState_None, and m_info.m_eState = k_ESteamNetworkingConnectionState_Connecting.
-	// See AcceptConnection.
-	// Check if a client has connected
+	// A new connection arrives on a listen socket.
 	if (connection_info.m_hListenSocket && call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None && call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
 		UtilityFunctions::print("Trying AcceptConnection...");
 		EResult res = SteamNetworkingSockets()->AcceptConnection(connect_handle);
@@ -411,10 +358,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 			UtilityFunctions::print("AcceptConnection success! User data =",connection_info.m_nUserData);
 		}
 		add_pending_peer(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
-
-		// No empty slots.  Server full!
-		// UtilityFunctions::print("Rejecting connection; server full");
-		// SteamNetworkingSockets()->CloseConnection(call_data->m_hConn, k_ESteamNetConnectionEnd_AppException_Generic, "Server full!", false);
 	}
 
 	if(connection_info.m_hListenSocket) return;
@@ -429,9 +372,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	
 
 	// A connection you initiated has been accepted by the remote host.
-	// m_eOldState = k_ESteamNetworkingConnectionState_Connecting, and
-	// m_info.m_eState = k_ESteamNetworkingConnectionState_Connected.
-	// TODO Some connections might transition to k_ESteamNetworkingConnectionState_FindingRoute first.
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
 	 	call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_FindingRoute) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected) {
@@ -442,10 +382,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	}
 
 	// A connection has been actively rejected or closed by the remote host.
-	// m_eOldState = k_ESteamNetworkingConnectionState_Connecting or k_ESteamNetworkingConnectionState_Connected,
-	// and m_info.m_eState = k_ESteamNetworkingConnectionState_ClosedByPeer. m_info.m_eEndReason and m_info.m_szEndDebug will have more details.
-	// NOTE: upon receiving this callback, you must still destroy the connection using CloseConnection to free up local resources.
-	// (The details passed to the function are not used in this case, since the connection is already closed.)
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connected) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_ClosedByPeer) {
@@ -455,11 +391,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	}
 	
 	// A problem was detected with the connection, and it has been closed by the local host. The most common failure is timeout, 
-	// but other configuration or authentication failures can cause this. m_eOldState = k_ESteamNetworkingConnectionState_Connecting 
-	// or k_ESteamNetworkingConnectionState_Connected, and m_info.m_eState = k_ESteamNetworkingConnectionState_ProblemDetectedLocally. 
-	// m_info.m_eEndReason and m_info.m_szEndDebug will have more details. 
-	// NOTE: upon receiving this callback, you must still destroy the connection using CloseConnection to free up local resources. 
-	// (The details passed to the function are not used in this case, since the connection is already closed.)
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connected) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_ProblemDetectedLocally) {
@@ -581,15 +512,6 @@ void SteamMultiplayerPeer::add_connection_peer(const SteamID &steam_id, HSteamNe
 	connections_by_steamId64[steam_id.to_int()] = connection_data;
 
 	set_steam_id_peer(steam_id, peer_id);
-
-	// TODO Remove
-	// NO USE PING On sockets for connection
-	// Error a = connection_data->ping();
-
-	// if(a != OK) {
-	//     DEBUG_DATA_SIGNAL_V("add_connection_peer: Error sending ping. ", a);    //shouldn't this be DEBUG_DATA_COND_SIGNAL_V or something like that?
-	// }
-	//ERR_FAIL_COND_MSG(a != OK, "Message failed to join.");
 }
 
 void SteamMultiplayerPeer::add_pending_peer(const SteamID &steamId, HSteamNetConnection connection) {
