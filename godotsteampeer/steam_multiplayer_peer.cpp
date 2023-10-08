@@ -20,7 +20,9 @@ SteamMultiplayerPeer::SteamMultiplayerPeer() :
 }
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {
-	// TODO in SteamMessages is disable peer with leave lobby, check if need Close connection here
+	if (_is_active()) {
+		close();
+	}
 }
 
 Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) {
@@ -200,7 +202,7 @@ void DebugOutputFunction(ESteamNetworkingSocketsDebugOutputType nType, const cha
 }
 
 // TODO Rename to create_server? for following enet pattern?
-Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, Array options) {
+Error SteamMultiplayerPeer::create_host(int n_local_virtual_port, Array options) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CREATE;
@@ -214,7 +216,7 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, options.size(), these_options);
-	UtilityFunctions::print("create_listen_socket_p2p with ", listen_socket);
+	UtilityFunctions::print("create_host with ", listen_socket);
 	delete[] these_options;
 	if (listen_socket == k_HSteamListenSocket_Invalid) {
 		unique_id = 0;
@@ -227,7 +229,7 @@ Error SteamMultiplayerPeer::create_listen_socket_p2p(int n_local_virtual_port, A
 
 // TODO Rename to create_client? for following enet pattern?
 // REVIEW Problem with godot steam reference (in godot steam use const String& network_identity)
-Error SteamMultiplayerPeer::connect_p2p(uint64_t identity_remote, int n_remote_virtual_port, Array options) {
+Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote_virtual_port, Array options) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CONNECT;
@@ -268,9 +270,8 @@ bool SteamMultiplayerPeer::get_identity(SteamNetworkingIdentity *p_identity) {
 }
 
 void SteamMultiplayerPeer::_bind_methods() {
-	// ClassDB::bind_method(D_METHOD("close_listen_socket"), &SteamMultiplayerPeer::close_listen_socket);
-	ClassDB::bind_method(D_METHOD("create_listen_socket_p2p", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::create_listen_socket_p2p);
-	ClassDB::bind_method(D_METHOD("connect_p2p", "identity_remote", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::connect_p2p);
+	ClassDB::bind_method(D_METHOD("create_host", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::create_host);
+	ClassDB::bind_method(D_METHOD("create_client", "identity_remote", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::create_client);
 	ClassDB::bind_method(D_METHOD("set_listen_socket", "listen_socket"), &SteamMultiplayerPeer::set_listen_socket);
 	ClassDB::bind_method(D_METHOD("get_listen_socket"), &SteamMultiplayerPeer::get_listen_socket);
 
