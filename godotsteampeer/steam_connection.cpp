@@ -36,7 +36,6 @@ Error SteamConnection::_send_pending() {
 }
 
 void SteamConnection::_add_packet(Packet *packet) {
-	UtilityFunctions::print(pending_retry_packets.size());
 	pending_retry_packets.push_back(packet);
 }
 
