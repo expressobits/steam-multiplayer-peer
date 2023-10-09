@@ -74,7 +74,7 @@ public:
 	int32_t _get_max_packet_size() const override;
 	// PackedByteArray _get_packet_script();
 	// Error _put_packet_script(const PackedByteArray &p_buffer);
-	// int32_t _get_packet_channel() const;
+	int32_t _get_packet_channel() const;
 	MultiplayerPeer::TransferMode _get_packet_mode() const;
 	void _set_transfer_channel(int32_t p_channel) override;
 	int32_t _get_transfer_channel() const;
