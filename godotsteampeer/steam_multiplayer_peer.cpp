@@ -115,10 +115,26 @@ bool SteamMultiplayerPeer::_is_server() const {
 	return unique_id == 1;
 }
 
+#define MAX_MESSAGE_COUNT 255
 void SteamMultiplayerPeer::_poll() {
 	// TODO Implement this method
 	ERR_FAIL_COND_MSG(!_is_active(), "The multiplayer instance isn't currently active.");
-	// UtilityFunctions::printerr("_poll not implemented!");
+
+	SteamNetworkingMessage_t *messages[MAX_MESSAGE_COUNT];
+
+	for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
+		int64_t key = E->key;
+		Ref<SteamConnection> value = E->value;
+		int count = SteamNetworkingSockets()->ReceiveMessagesOnConnection(value->steam_connection, messages, MAX_MESSAGE_COUNT);
+		if (count > 0) {
+			UtilityFunctions::print("receive (", count, ") message(s)");
+			for (int i = 0; i < count; i++) {
+				SteamNetworkingMessage_t *msg = messages[i];
+				_process_message(msg);
+				msg->Release();
+			}
+		}
+	}
 }
 
 void SteamMultiplayerPeer::_close() {
@@ -374,14 +390,10 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_FindingRoute) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected) {
-
-		if(_is_server())
-		{
+		if (_is_server()) {
 			// Server correct allocated peer id for steam connection
 			set_steam_id_peer(call_data->m_info.m_identityRemote.GetSteamID(), (int32_t)2);
-		}
-		else
-		{
+		} else {
 			add_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
 			add_peer_for_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int32_t)1);
 		}
@@ -389,7 +401,7 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 
 	if (_is_server())
 		return;
-	
+
 	/////// Client callbacks
 
 	// A connection has been actively rejected or closed by the remote host.
@@ -524,9 +536,23 @@ void SteamMultiplayerPeer::add_peer_for_connection(const SteamID &steam_id, HSte
 void SteamMultiplayerPeer::add_connection(const SteamID &steamId, HSteamNetConnection connection) {
 	ERR_FAIL_COND_MSG(steamId == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
 
-    Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steamId)));
+	Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steamId)));
 	connection_data->steam_connection = connection;
-    connections_by_steamId64[steamId.to_int()] = connection_data;
+	connections_by_steamId64[steamId.to_int()] = connection_data;
+}
+
+void SteamMultiplayerPeer::_process_message(const SteamNetworkingMessage_t *msg) {
+	ERR_FAIL_COND_MSG(msg->GetSize() > MAX_STEAM_PACKET_SIZE, "Packet too large to send,");
+
+	SteamConnection::Packet *packet = new SteamConnection::Packet;
+	packet->sender.set_from_CSteamID(msg->m_identityPeer.GetSteamID());
+	packet->size = msg->GetSize();
+	packet->transfer_mode = msg->m_nFlags;
+
+	uint8_t *rawData = (uint8_t *)msg->GetData();
+	memcpy(packet->data, rawData, packet->size);
+	incoming_packets.push_back(packet);
+	UtilityFunctions::print("receive packet (", packet, ")");
 }
 
 uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(int peer) {
