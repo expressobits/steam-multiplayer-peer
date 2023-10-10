@@ -99,10 +99,8 @@ public:
 	bool get_identity(SteamNetworkingIdentity *p_identity);
 	const SteamNetworkingConfigValue_t *convert_options_array(Array options);
 	Ref<SteamConnection> get_connection_by_peer(int peer_id);
-	void add_peer_for_connection(const SteamID &steamId, HSteamNetConnection connection, int32_t peer_id);
 	void add_connection(const SteamID &steamId, HSteamNetConnection connection);
 
-	void process_ping(const SteamNetworkingMessage_t *msg);
 	void _process_message(const SteamNetworkingMessage_t *msg);
 
 	uint64_t get_steam64_from_peer_id(int peer);    //Steam64 is a Steam ID

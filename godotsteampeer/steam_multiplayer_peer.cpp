@@ -46,8 +46,6 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 	ERR_FAIL_COND_V(active_mode == MODE_CLIENT && !peerId_to_steamId.has(1), ERR_BUG);
 	int transferMode = _get_steam_transfer_flag();
 
-	UtilityFunctions::print("_send_packet [", p_buffer_size, "] bytes");
-
 	if(p_buffer_size > 0)
 	{
 		String print_msg;
@@ -80,14 +78,10 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 
 int32_t SteamMultiplayerPeer::_get_available_packet_count() const {
 	int32_t size = incoming_packets.size();
-	if (size > 0) {
-		UtilityFunctions::print("_get_available_packet_count = ", size);
-	}
 	return size;
 }
 
 int32_t SteamMultiplayerPeer::_get_max_packet_size() const {
-	UtilityFunctions::print("_get_max_packet_size");
 	return k_cbMaxSteamNetworkingSocketsMessageSizeSend;
 }
 
@@ -100,30 +94,24 @@ MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, TRANSFER_MODE_RELIABLE, "No pending packets, cannot get transfer mode.");
 
 	if (incoming_packets.front()->get()->transfer_mode & k_nSteamNetworkingSend_Reliable) {
-		UtilityFunctions::print("_get_packet_mode = TRANSFER_MODE_RELIABLE");
 		return TRANSFER_MODE_RELIABLE;
 	} else {
-		UtilityFunctions::print("_get_packet_mode = TRANSFER_MODE_UNRELIABLE");
 		return TRANSFER_MODE_UNRELIABLE;
 	}
 }
 
 void SteamMultiplayerPeer::_set_transfer_channel(int32_t p_channel) {
-	UtilityFunctions::print("_set_transfer_channel = ", p_channel);
 }
 
 int32_t SteamMultiplayerPeer::_get_transfer_channel() const {
-	UtilityFunctions::print("_get_transfer_channel = 0");
 	return 0;
 }
 
 void SteamMultiplayerPeer::_set_transfer_mode(MultiplayerPeer::TransferMode p_mode) {
-	UtilityFunctions::print("_set_transfer_mode = ", p_mode);
 	transfer_mode = p_mode;
 }
 
 MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_transfer_mode() const {
-	UtilityFunctions::print("_get_transfer_mode = ", transfer_mode);
 	return transfer_mode;
 }
 
@@ -136,7 +124,6 @@ int32_t SteamMultiplayerPeer::_get_packet_peer() const {
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, 1, "No packets to receive.");
 
 	int32_t peer_id = connections_by_steamId64[incoming_packets.front()->get()->sender.to_int()]->peer_id;
-	UtilityFunctions::print("_get_packet_peer = ", peer_id);
 	return peer_id;
 }
 
@@ -156,10 +143,8 @@ void SteamMultiplayerPeer::_poll() {
 		Ref<SteamConnection> value = E->value;
 		int count = SteamNetworkingSockets()->ReceiveMessagesOnConnection(value->steam_connection, messages, MAX_MESSAGE_COUNT);
 		if (count > 0) {
-			UtilityFunctions::print("receive (", count, ") message(s)");
 			for (int i = 0; i < count; i++) {
 				SteamNetworkingMessage_t *msg = messages[i];
-				UtilityFunctions::print("messsage = (", i, ")");
 				_process_message(msg);
 				msg->Release();
 			}
@@ -413,7 +398,7 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		} else {
 			UtilityFunctions::print("AcceptConnection success! User data =", connection_info.m_nUserData);
 		}
-		add_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
+		
 	}
 
 	// A connection you initiated has been accepted by the remote host.
@@ -421,11 +406,12 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_FindingRoute) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected) {
 		if (_is_server()) {
+			add_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
 			// Server correct allocated peer id for steam connection
 			set_steam_id_peer(call_data->m_info.m_identityRemote.GetSteamID(), (int32_t)2);
 		} else {
 			add_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
-			add_peer_for_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn, (int32_t)1);
+			set_steam_id_peer(call_data->m_info.m_identityRemote.GetSteamID(), (int32_t)1);
 			connection_status = ConnectionStatus::CONNECTION_CONNECTED;
 		}
 	}
@@ -558,12 +544,6 @@ Ref<SteamConnection> SteamMultiplayerPeer::get_connection_by_peer(int peer_id) {
 	return nullptr;
 }
 
-void SteamMultiplayerPeer::add_peer_for_connection(const SteamID &steam_id, HSteamNetConnection connection, int32_t peer_id) {
-	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
-
-	set_steam_id_peer(steam_id, peer_id);
-}
-
 void SteamMultiplayerPeer::add_connection(const SteamID &steamId, HSteamNetConnection connection) {
 	ERR_FAIL_COND_MSG(steamId == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
 
@@ -583,7 +563,6 @@ void SteamMultiplayerPeer::_process_message(const SteamNetworkingMessage_t *msg)
 	uint8_t *rawData = (uint8_t *)msg->GetData();
 	memcpy(packet->data, rawData, packet->size);
 	incoming_packets.push_back(packet);
-	UtilityFunctions::print("receive packet");
 }
 
 uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(int peer) {
@@ -615,6 +594,7 @@ int SteamMultiplayerPeer::get_peer_id_from_steam_id(SteamID &steamid) const {
 }
 
 void SteamMultiplayerPeer::set_steam_id_peer(SteamID steam_id, int peer_id) {
+	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
 	ERR_FAIL_COND_MSG(connections_by_steamId64.has(steam_id.to_int()) == false, "Steam ID missing");
 
 	Ref<SteamConnection> con = connections_by_steamId64[steam_id.to_int()];
