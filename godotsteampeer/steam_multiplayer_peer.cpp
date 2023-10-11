@@ -12,8 +12,6 @@ using namespace godot;
 SteamMultiplayerPeer::SteamMultiplayerPeer() :
 		// Networking Sockets callbacks /////////////
 		callback_network_connection_status_changed(this, &SteamMultiplayerPeer::network_connection_status_changed),
-		callback_network_authentication_status(this, &SteamMultiplayerPeer::network_authentication_status),
-		callback_networking_fake_ip_result(this, &SteamMultiplayerPeer::networking_fake_ip_result),
 
 		// Networking Utils callbacks ///////////////
 		callback_relay_network_status(this, &SteamMultiplayerPeer::relay_network_status) {
@@ -465,49 +463,6 @@ void SteamMultiplayerPeer::network_authentication_status(SteamNetAuthenticationS
 	// Send the data back via signal
 	emit_signal("network_authentication_status", available, debug_message);
 	delete[] debug_message;
-}
-
-// A struct used to describe a "fake IP" we have been assigned to use as an
-// identifier. This callback is posted when
-// ISteamNetworkingSoockets::BeginAsyncRequestFakeIP completes.
-void SteamMultiplayerPeer::networking_fake_ip_result(SteamNetworkingFakeIPResult_t *call_data) {
-	int result = call_data->m_eResult;
-	// Pass this new networking identity to the map
-	// TODO networking_identities removed?
-	// networking_identities["fake_ip_identity"] = call_data->m_identity;
-	// uint32 ip = call_data->m_unIP;
-	// // Convert the IP address back to a string
-	// const int NBYTES = 4;
-	// uint8 octet[NBYTES];
-	// char fake_ip[16];
-	// for (int i = 0; i < NBYTES; i++) {
-	// 	octet[i] = ip >> (i * 8);
-	// }
-	// sprintf(fake_ip, "%d.%d.%d.%d", octet[0], octet[1], octet[2], octet[3]);
-	// // Get the ports as an array
-	// Array port_list;
-	// uint16 *ports = call_data->m_unPorts;
-	// for (uint16 i = 0; i < sizeof(ports); i++) {
-	// 	port_list.append(ports[i]);
-	// }
-	// emit_signal("networking_fake_ip_result", result, "fake_ip_identity", fake_ip, port_list);
-	UtilityFunctions::print("networking_fake_ip_result not implemented! Because networking_identities not found!");
-}
-
-// NETWORKING UTILS CALLBACKS ///////////////////
-//
-//! A struct used to describe our readiness to use the relay network.
-void SteamMultiplayerPeer::relay_network_status(SteamRelayNetworkStatus_t *call_data) {
-	// int available = call_data->m_eAvail;
-	// int ping_measurement = call_data->m_bPingMeasurementInProgress;
-	// int available_config = call_data->m_eAvailNetworkConfig;
-	// int available_relay = call_data->m_eAvailAnyRelay;
-	// char *debug_message = new char[256];
-	// sprintf(debug_message, "%s", call_data->m_debugMsg);
-	// //	debug_message = call_data->m_debugMsg;
-	// emit_signal("relay_network_status", available, ping_measurement,
-	// 		available_config, available_relay, debug_message);
-	// delete[] debug_message;
 }
 
 // GODOT MULTIPLAYER PEER UTILS  ///////////////////
