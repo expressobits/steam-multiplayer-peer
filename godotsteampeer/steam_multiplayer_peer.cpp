@@ -11,10 +11,7 @@ using namespace godot;
 
 SteamMultiplayerPeer::SteamMultiplayerPeer() :
 		// Networking Sockets callbacks /////////////
-		callback_network_connection_status_changed(this, &SteamMultiplayerPeer::network_connection_status_changed),
-
-		// Networking Utils callbacks ///////////////
-		callback_relay_network_status(this, &SteamMultiplayerPeer::relay_network_status) {
+		callback_network_connection_status_changed(this, &SteamMultiplayerPeer::network_connection_status_changed) {
 }
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {
@@ -450,19 +447,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		//remove_connection_peer();
 		return;
 	}
-}
-
-//! This callback is posted whenever the state of our readiness changes.
-void SteamMultiplayerPeer::network_authentication_status(SteamNetAuthenticationStatus_t *call_data) {
-	// Status.
-	int available = call_data->m_eAvail;
-	// Non-localized English language status. For diagnostic / debugging purposes
-	// only.
-	char *debug_message = new char[256];
-	sprintf(debug_message, "%s", call_data->m_debugMsg);
-	// Send the data back via signal
-	emit_signal("network_authentication_status", available, debug_message);
-	delete[] debug_message;
 }
 
 // GODOT MULTIPLAYER PEER UTILS  ///////////////////

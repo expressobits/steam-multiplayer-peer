@@ -159,11 +159,6 @@ private:
 
 	// Networking Sockets callbacks /////////
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
-	STEAM_CALLBACK(SteamMultiplayerPeer, network_authentication_status, SteamNetAuthenticationStatus_t, callback_network_authentication_status);
-	STEAM_CALLBACK(SteamMultiplayerPeer, networking_fake_ip_result, SteamNetworkingFakeIPResult_t, callback_networking_fake_ip_result);
-
-	// Networking Utils callbacks ///////////
-	STEAM_CALLBACK(SteamMultiplayerPeer, relay_network_status, SteamRelayNetworkStatus_t, callback_relay_network_status);
 };
 
 #endif // STEAM_MULTIPLAYER_PEER_H
