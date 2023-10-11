@@ -12,12 +12,14 @@ EResult SteamConnection::_raw_send(Packet *packet) {
 // TODO change to return correct error
 Error SteamConnection::_send_pending() {
 	while (pending_retry_packets.size() > 0) {
+		UtilityFunctions::print("try _raw_send");
 		Packet *packet = pending_retry_packets.front()->get();
 		EResult errorCode = _raw_send(packet);
 		UtilityFunctions::print("_send_pending packet with sucess!");
 		if (errorCode == k_EResultOK) {
 			delete packet;
 			pending_retry_packets.pop_front();
+			UtilityFunctions::print("pending_retry_packets.pop_front()");
 		} else {
 			String errorString = _convert_eresult_to_string(errorCode);
 			if (packet->transfer_mode & k_nSteamNetworkingSend_Reliable) { //comparison to ensure inclusion

@@ -132,6 +132,16 @@ void SteamMultiplayerPeer::_poll() {
 
 	SteamNetworkingMessage_t *messages[MAX_MESSAGE_COUNT];
 
+	// if(is_setup && _is_server())
+	// {
+	// 	for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
+	// 		Ref<SteamConnection> value = E->value;
+	// 		Error err = value->ping();
+	// 		is_setup = true;
+	// 	}
+	// 	return;
+	// }
+
 	for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
 		int64_t key = E->key;
 		Ref<SteamConnection> value = E->value;
@@ -284,7 +294,7 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CONNECT;
 	}
-	unique_id = 2;
+	unique_id = generate_unique_id();
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	SteamNetworkingIdentity p_remote_id;
@@ -397,12 +407,15 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		if (_is_server()) {
 			
 			//Error err = connections_by_steamId64[steam_id.to_int()]->ping();
-			set_steam_id_peer(steam_id, 2);
+			//set_steam_id_peer(steam_id, 2);
 		}
 		else
 		{
-			set_steam_id_peer(steam_id, 1);
+			//set_steam_id_peer(steam_id, 1);
 			connection_status = ConnectionStatus::CONNECTION_CONNECTED;
+			SteamConnection::PingPayload payload = SteamConnection::PingPayload();
+			payload.peer_id = unique_id;
+			Error err = connections_by_steamId64[steam_id.to_int()]->ping(payload);
 		}
 	}
 
@@ -505,26 +518,39 @@ void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
 	SteamConnection::PingPayload *receive = (SteamConnection::PingPayload *)msg->GetData();
 	SteamID steam_id = msg->m_identityPeer.GetSteamID();
 
+	UtilityFunctions::print("receive ping!");
+
+	Ref<SteamConnection> connection = connections_by_steamId64[steam_id.to_int()];
+
 	if (receive->peer_id == -1) {
 		// Client receive peer setup confirmation from server
-		emit_signal("peer_connected", unique_id);
+		//emit_signal("peer_connected", unique_id);
 
+		// if(_is_server())
+		// {
+		// 	SteamConnection::PingPayload payload = SteamConnection::PingPayload();
+		// 	payload.peer_id = unique_id;
+		// 	Error err = connection->ping(payload);
+		// }
+		// else
+		// {
+		// 	//emit_signal("peer_connected", connection->peer_id);
+		// }
 
 	} else {
-
-		Ref<SteamConnection> connection = connections_by_steamId64[steam_id.to_int()];
 		if (connection->peer_id == -1) {
 			set_steam_id_peer(msg->m_identityPeer.GetSteamID(), receive->peer_id);
 		}
-		if(!_is_server())
+		if(_is_server())
 		{
 			SteamConnection::PingPayload payload = SteamConnection::PingPayload();
 			payload.peer_id = unique_id;
-			Error err = connections_by_steamId64[steam_id.to_int()]->ping(payload);
+			Error err = connection->ping(payload);
+			emit_signal("peer_connected", connection->peer_id);
 		}
 		else
 		{
-			emit_signal("peer_connected", receive->peer_id);
+			emit_signal("peer_connected", connection->peer_id);
 		}
 	}
 }
@@ -565,7 +591,6 @@ void SteamMultiplayerPeer::set_steam_id_peer(SteamID steam_id, int peer_id) {
 	if (con->peer_id == -1) {
 		con->peer_id = peer_id;
 		peerId_to_steamId[peer_id] = con;
-		emit_signal("peer_connected", peer_id);
 	} else if (con->peer_id == peer_id) {
 		//peer already exists, so nothing happens
 	} else {
