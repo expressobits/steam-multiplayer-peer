@@ -14,6 +14,7 @@ Error SteamConnection::_send_pending() {
 	while (pending_retry_packets.size() > 0) {
 		Packet *packet = pending_retry_packets.front()->get();
 		EResult errorCode = _raw_send(packet);
+		UtilityFunctions::print("_send_pending packet with sucess!");
 		if (errorCode == k_EResultOK) {
 			delete packet;
 			pending_retry_packets.pop_front();
@@ -67,6 +68,17 @@ SteamConnection::~SteamConnection() {
 	    delete pending_retry_packets.front()->get();
 	    pending_retry_packets.pop_front();
 	}
+}
+
+Error SteamConnection::ping() {
+	PingPayload p = PingPayload();
+    return ping(p);
+}
+
+Error SteamConnection::ping(const PingPayload &p) {
+	UtilityFunctions::print("ping message contains ",sizeof(PingPayload), " bytes");
+	Packet* packet = new Packet((void *) &p, sizeof(PingPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE);
+    return send(packet);
 }
 
 // Long but simple: just return the type of the EResult as a Godot String
