@@ -310,8 +310,6 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 		return Error::ERR_CANT_CREATE;
 	}
 
-	add_connection(p_remote_id.GetSteamID() , connection);
-
 	active_mode = MODE_CLIENT;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTING;
 	UtilityFunctions::print(connection, " p_remote_id=", p_remote_id.GetSteamID64());
@@ -332,11 +330,6 @@ void SteamMultiplayerPeer::_bind_methods() {
 
 	// NETWORKING SOCKETS SIGNALS ///////////////
 	ADD_SIGNAL(MethodInfo("network_connection_status_changed", PropertyInfo(Variant::INT, "connect_handle"), PropertyInfo(Variant::DICTIONARY, "connection"), PropertyInfo(Variant::INT, "old_state")));
-	ADD_SIGNAL(MethodInfo("network_authentication_status", PropertyInfo(Variant::INT, "available"), PropertyInfo(Variant::STRING, "debug_message")));
-	ADD_SIGNAL(MethodInfo("networking_fake_ip_result", PropertyInfo(Variant::INT, "result"), PropertyInfo(Variant::STRING, "identity"), PropertyInfo(Variant::STRING, "fake_ip"), PropertyInfo(Variant::ARRAY, "port_list")));
-
-	// NETWORKING UTILS SIGNALS /////////////////
-	ADD_SIGNAL(MethodInfo("relay_network_status", PropertyInfo(Variant::INT, "available"), PropertyInfo(Variant::INT, "ping_measurement"), PropertyInfo(Variant::INT, "available_config"), PropertyInfo(Variant::INT, "available_relay"), PropertyInfo(Variant::STRING, "debug_message")));
 }
 
 const int SteamMultiplayerPeer::_get_steam_transfer_flag() {
