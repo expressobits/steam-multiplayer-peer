@@ -102,6 +102,7 @@ public:
 	void add_connection(const SteamID &steamId, HSteamNetConnection connection);
 
 	void _process_message(const SteamNetworkingMessage_t *msg);
+	void _process_ping(const SteamNetworkingMessage_t *msg);
 
 	uint64_t get_steam64_from_peer_id(int peer);    //Steam64 is a Steam ID
     int get_peer_id_from_steam64(uint64_t steamid);

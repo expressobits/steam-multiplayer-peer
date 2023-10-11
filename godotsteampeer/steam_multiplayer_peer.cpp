@@ -133,7 +133,6 @@ bool SteamMultiplayerPeer::_is_server() const {
 
 #define MAX_MESSAGE_COUNT 255
 void SteamMultiplayerPeer::_poll() {
-	// TODO Implement this method
 	ERR_FAIL_COND_MSG(!_is_active(), "The multiplayer instance isn't currently active.");
 
 	SteamNetworkingMessage_t *messages[MAX_MESSAGE_COUNT];
@@ -143,9 +142,17 @@ void SteamMultiplayerPeer::_poll() {
 		Ref<SteamConnection> value = E->value;
 		int count = SteamNetworkingSockets()->ReceiveMessagesOnConnection(value->steam_connection, messages, MAX_MESSAGE_COUNT);
 		if (count > 0) {
+			UtilityFunctions::print("Received (",count,") messages!");
 			for (int i = 0; i < count; i++) {
 				SteamNetworkingMessage_t *msg = messages[i];
-				_process_message(msg);
+				
+				if (get_peer_id_from_steam64(msg->m_identityPeer.GetSteamID64()) != -1) {
+					UtilityFunctions::print("- Received Base message");
+					_process_message(msg);
+				} else {
+					UtilityFunctions::print("- Received Ping message");
+					_process_ping(msg);
+				}
 				msg->Release();
 			}
 		}
@@ -282,17 +289,18 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CONNECT;
 	}
-	unique_id = (int32_t)2;
+	unique_id = generate_unique_id();
+	UtilityFunctions::print("My unique id is = ",unique_id);
 	// TODO Add peer_id to options for connection
 
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
 
-	Array peer_id_array_config_info;
-	peer_id_array_config_info.resize(3);
-	peer_id_array_config_info[0] = Variant(k_ESteamNetworkingConfig_ConnectionUserData);
-	peer_id_array_config_info[1] = Variant(2);
-	peer_id_array_config_info[2] = Variant(unique_id);
-	options.append(peer_id_array_config_info);
+	// Array peer_id_array_config_info;
+	// peer_id_array_config_info.resize(3);
+	// peer_id_array_config_info[0] = Variant(k_ESteamNetworkingConfig_ConnectionUserData);
+	// peer_id_array_config_info[1] = Variant(2);
+	// peer_id_array_config_info[2] = Variant(unique_id);
+	// options.append(peer_id_array_config_info);
 
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 
@@ -306,6 +314,8 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 		unique_id = 0;
 		return Error::ERR_CANT_CREATE;
 	}
+
+	add_connection(p_remote_id.GetSteamID() , connection);
 
 	active_mode = MODE_CLIENT;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTING;
@@ -385,7 +395,7 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	connection["end_debug"] = connection_info.m_szEndDebug;
 	connection["debug_description"] = connection_info.m_szConnectionDescription;
 	int old_state = call_data->m_eOldState;
-	emit_signal("network_connection_status_changed", connect_handle, connection, old_state);
+	//emit_signal("network_connection_status_changed", connect_handle, connection, old_state);
 
 	// A new connection arrives on a listen socket.
 	if (connection_info.m_hListenSocket && call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None && call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
@@ -398,20 +408,24 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		} else {
 			UtilityFunctions::print("AcceptConnection success! User data =", connection_info.m_nUserData);
 		}
-		
 	}
 
 	// A connection you initiated has been accepted by the remote host.
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_FindingRoute) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected) {
+
+		SteamID steam_id = call_data->m_info.m_identityRemote.GetSteamID();
+		add_connection(steam_id, call_data->m_hConn);
+
 		if (_is_server()) {
-			add_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
+			
 			// Server correct allocated peer id for steam connection
-			set_steam_id_peer(call_data->m_info.m_identityRemote.GetSteamID(), (int32_t)2);
-		} else {
-			add_connection(call_data->m_info.m_identityRemote.GetSteamID(), call_data->m_hConn);
-			set_steam_id_peer(call_data->m_info.m_identityRemote.GetSteamID(), (int32_t)1);
+			Error err = connections_by_steamId64[steam_id.to_int()]->ping();
+		}
+		else
+		{
+			UtilityFunctions::print("Connected to socket!");
 			connection_status = ConnectionStatus::CONNECTION_CONNECTED;
 		}
 	}
@@ -565,6 +579,36 @@ void SteamMultiplayerPeer::_process_message(const SteamNetworkingMessage_t *msg)
 	incoming_packets.push_back(packet);
 }
 
+void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
+	ERR_FAIL_COND_MSG(sizeof(SteamConnection::PingPayload) != msg->GetSize(), "Payload is the wrong size for a ping.");
+
+	SteamConnection::PingPayload *receive = (SteamConnection::PingPayload *)msg->GetData();
+	SteamID steam_id = msg->m_identityPeer.GetSteamID();
+
+	if (receive->peer_id == -1) {
+		// Client receive peer setup confirmation from server
+		emit_signal("peer_connected", unique_id);
+
+
+	} else {
+
+		Ref<SteamConnection> connection = connections_by_steamId64[steam_id.to_int()];
+		if (connection->peer_id == -1) {
+			set_steam_id_peer(msg->m_identityPeer.GetSteamID(), receive->peer_id);
+		}
+		if(!_is_server())
+		{
+			SteamConnection::PingPayload payload = SteamConnection::PingPayload();
+			payload.peer_id = unique_id;
+			Error err = connections_by_steamId64[steam_id.to_int()]->ping(payload);
+		}
+		else
+		{
+			emit_signal("peer_connected", receive->peer_id);
+		}
+	}
+}
+
 uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(int peer) {
 	if (peer == this->unique_id) {
 		return SteamUser()->GetSteamID().ConvertToUint64();
@@ -601,7 +645,6 @@ void SteamMultiplayerPeer::set_steam_id_peer(SteamID steam_id, int peer_id) {
 	if (con->peer_id == -1) {
 		con->peer_id = peer_id;
 		peerId_to_steamId[peer_id] = con;
-		emit_signal("peer_connected", peer_id);
 	} else if (con->peer_id == peer_id) {
 		//peer already exists, so nothing happens
 	} else {
