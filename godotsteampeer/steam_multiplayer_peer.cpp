@@ -284,7 +284,7 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CONNECT;
 	}
-	unique_id = generate_unique_id();
+	unique_id = 2;
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	SteamNetworkingIdentity p_remote_id;
@@ -396,12 +396,12 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 
 		if (_is_server()) {
 			
-			// Server correct allocated peer id for steam connection
-			Error err = connections_by_steamId64[steam_id.to_int()]->ping();
+			//Error err = connections_by_steamId64[steam_id.to_int()]->ping();
+			set_steam_id_peer(steam_id, 2);
 		}
 		else
 		{
-			UtilityFunctions::print("Connected to socket!");
+			set_steam_id_peer(steam_id, 1);
 			connection_status = ConnectionStatus::CONNECTION_CONNECTED;
 		}
 	}
@@ -565,6 +565,7 @@ void SteamMultiplayerPeer::set_steam_id_peer(SteamID steam_id, int peer_id) {
 	if (con->peer_id == -1) {
 		con->peer_id = peer_id;
 		peerId_to_steamId[peer_id] = con;
+		emit_signal("peer_connected", peer_id);
 	} else if (con->peer_id == peer_id) {
 		//peer already exists, so nothing happens
 	} else {
