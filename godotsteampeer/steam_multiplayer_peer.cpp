@@ -285,20 +285,8 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 		return Error::ERR_CANT_CONNECT;
 	}
 	unique_id = generate_unique_id();
-	UtilityFunctions::print("My unique id is = ",unique_id);
-	// TODO Add peer_id to options for connection
-
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
-
-	// Array peer_id_array_config_info;
-	// peer_id_array_config_info.resize(3);
-	// peer_id_array_config_info[0] = Variant(k_ESteamNetworkingConfig_ConnectionUserData);
-	// peer_id_array_config_info[1] = Variant(2);
-	// peer_id_array_config_info[2] = Variant(unique_id);
-	// options.append(peer_id_array_config_info);
-
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
-
 	SteamNetworkingIdentity p_remote_id;
 	p_remote_id.SetSteamID64(identity_remote);
 
