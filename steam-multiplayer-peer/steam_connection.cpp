@@ -66,9 +66,9 @@ SteamConnection::SteamConnection(SteamID steam_id) {
 
 SteamConnection::~SteamConnection() {
 	SteamNetworkingSockets()->CloseConnection(this->steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic, "Disconnect Default!", true);
-	while(pending_retry_packets.size()) {
-	    delete pending_retry_packets.front()->get();
-	    pending_retry_packets.pop_front();
+	while (pending_retry_packets.size()) {
+		delete pending_retry_packets.front()->get();
+		pending_retry_packets.pop_front();
 	}
 }
 
