@@ -5,7 +5,7 @@ import os
 env = SConscript("godot-cpp/SConstruct")
 
 # Local dependency paths, adapt them to your setup
-steam_lib_path = "godotsteampeer/sdk/redistributable_bin"
+steam_lib_path = "steam-multiplayer-peer/sdk/redistributable_bin"
 
 # Check our platform specifics
 if env['platform'] in ('macos', 'osx'):
@@ -29,25 +29,25 @@ elif env['platform'] == "windows":
 
 # make sure our binding library is properly includes
 env.Append(LIBPATH=[steam_lib_path])
-env.Append(CPPPATH=['godotsteampeer/sdk/public'])
+env.Append(CPPPATH=['steam-multiplayer-peer/sdk/public'])
 env.Append(LIBS=[
     steamworks_library.replace(".dll", "")
 ])
 
 # tweak this if you want to use different folders, or more folders, to store your source code in.
-env.Append(CPPPATH=['godotsteampeer/'])
-sources = Glob('godotsteampeer/*.cpp')
+env.Append(CPPPATH=['steam-multiplayer-peer/'])
+sources = Glob('steam-multiplayer-peer/*.cpp')
 
 if env["platform"] == "macos":
     library = env.SharedLibrary(
-        "bin/libgodotsteampeer.{}.{}.framework/libgodotsteampeer.{}.{}".format(
+        "bin/steam-multiplayer-peer.{}.{}.framework/steam-multiplayer-peer.{}.{}".format(
             env["platform"], env["target"], env["platform"], env["target"]
         ),
         source=sources,
     )
 else:
     library = env.SharedLibrary(
-        "bin/libgodotsteampeer{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+        "bin/steam-multiplayer-peer{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
         source=sources,
     )
 

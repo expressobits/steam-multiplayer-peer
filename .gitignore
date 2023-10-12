@@ -12,4 +12,4 @@
 .vscode/
 bin/
 .sconsign.dblite
-godotsteampeer/sdk
+steam-multiplayer-peer/sdk
