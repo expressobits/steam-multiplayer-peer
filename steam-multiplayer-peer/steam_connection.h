@@ -32,7 +32,7 @@ public:
     };
 
     struct PingPayload {
-        int peer_id = -1;
+        uint32_t peer_id = -1;
     };
 
 	bool m_bActive;					// Is this slot in use? Or is it available for new connections?
