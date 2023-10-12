@@ -43,15 +43,7 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 
 	if(p_buffer_size > 0)
 	{
-		String print_msg;
-		for (size_t i = 0; i < p_buffer_size; i++)
-		{
-			int v = p_buffer[i];
-			print_msg += "[";
-			print_msg += String::num_uint64(v, 16, true);
-			print_msg += "] ";
-		}
-		UtilityFunctions::print("Packet = ", print_msg);
+		UtilityFunctions::print("Packet");
 	}
 
 	if (target_peer == 0) {
@@ -132,30 +124,17 @@ void SteamMultiplayerPeer::_poll() {
 
 	SteamNetworkingMessage_t *messages[MAX_MESSAGE_COUNT];
 
-	// if(is_setup && _is_server())
-	// {
-	// 	for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
-	// 		Ref<SteamConnection> value = E->value;
-	// 		Error err = value->ping();
-	// 		is_setup = true;
-	// 	}
-	// 	return;
-	// }
-
 	for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
 		int64_t key = E->key;
 		Ref<SteamConnection> value = E->value;
 		int count = SteamNetworkingSockets()->ReceiveMessagesOnConnection(value->steam_connection, messages, MAX_MESSAGE_COUNT);
 		if (count > 0) {
-			UtilityFunctions::print("Received (",count,") messages!");
 			for (int i = 0; i < count; i++) {
 				SteamNetworkingMessage_t *msg = messages[i];
 				
 				if (get_peer_id_from_steam64(msg->m_identityPeer.GetSteamID64()) != -1) {
-					UtilityFunctions::print("- Received Base message");
 					_process_message(msg);
 				} else {
-					UtilityFunctions::print("- Received Ping message");
 					_process_ping(msg);
 				}
 				msg->Release();
@@ -518,26 +497,9 @@ void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
 	SteamConnection::PingPayload *receive = (SteamConnection::PingPayload *)msg->GetData();
 	SteamID steam_id = msg->m_identityPeer.GetSteamID();
 
-	UtilityFunctions::print("receive ping!");
-
 	Ref<SteamConnection> connection = connections_by_steamId64[steam_id.to_int()];
 
-	if (receive->peer_id == -1) {
-		// Client receive peer setup confirmation from server
-		//emit_signal("peer_connected", unique_id);
-
-		// if(_is_server())
-		// {
-		// 	SteamConnection::PingPayload payload = SteamConnection::PingPayload();
-		// 	payload.peer_id = unique_id;
-		// 	Error err = connection->ping(payload);
-		// }
-		// else
-		// {
-		// 	//emit_signal("peer_connected", connection->peer_id);
-		// }
-
-	} else {
+	if (receive->peer_id != -1) {
 		if (connection->peer_id == -1) {
 			set_steam_id_peer(msg->m_identityPeer.GetSteamID(), receive->peer_id);
 		}
