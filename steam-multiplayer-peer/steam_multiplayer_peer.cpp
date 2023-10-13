@@ -39,10 +39,6 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 	ERR_FAIL_COND_V(active_mode == MODE_CLIENT && !peerId_to_steamId.has(1), ERR_BUG);
 	int transferMode = _get_steam_transfer_flag();
 
-	if (p_buffer_size > 0) {
-		UtilityFunctions::print("Packet");
-	}
-
 	if (target_peer == 0) {
 		Error returnValue = OK;
 		for (HashMap<uint64_t, Ref<SteamConnection>>::Iterator E = connections_by_steamId64.begin(); E; ++E) {
@@ -240,7 +236,6 @@ Error SteamMultiplayerPeer::create_host(int n_local_virtual_port, Array options)
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, options.size(), these_options);
-	UtilityFunctions::print("create_host with ", listen_socket);
 	delete[] these_options;
 	if (listen_socket == k_HSteamListenSocket_Invalid) {
 		return Error::ERR_CANT_CREATE;
@@ -272,7 +267,6 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 
 	active_mode = MODE_CLIENT;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTING;
-	UtilityFunctions::print(connection, " p_remote_id=", p_remote_id.GetSteamID64());
 	return Error::OK;
 }
 
@@ -328,14 +322,10 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 
 	// A new connection arrives on a listen socket.
 	if (connection_info.m_hListenSocket && call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None && call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
-		UtilityFunctions::print("Trying AcceptConnection...");
 		EResult res = SteamNetworkingSockets()->AcceptConnection(connect_handle);
 		if (res != k_EResultOK) {
-			UtilityFunctions::print("AcceptConnection error! returned", res);
 			SteamNetworkingSockets()->CloseConnection(connect_handle, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false);
 			return;
-		} else {
-			UtilityFunctions::print("AcceptConnection success! User data =", connection_info.m_nUserData);
 		}
 	}
 
@@ -491,16 +481,6 @@ int SteamMultiplayerPeer::get_peer_id_from_steam64(uint64_t steamid) {
 	} else
 		return -1;
 }
-
-//Should this be by reference?
-// int SteamMultiplayerPeer::get_peer_id_from_steam_id(SteamID &steamid) const {
-// 	if (steamid == SteamID(SteamUser()->GetSteamID())) {
-// 		return this->unique_id;
-// 	} else if (connections_by_steamId64.has(steamid.to_int())) {
-// 		return connections_by_steamId64[steamid.to_int()]->peer_id;
-// 	} else
-// 		return -1;
-// }
 
 void SteamMultiplayerPeer::set_steam_id_peer(uint64_t steam_id, int peer_id) {
 	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID().ConvertToUint64(), "Cannot add self as a new peer.");
