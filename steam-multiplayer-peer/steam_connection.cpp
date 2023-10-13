@@ -5,8 +5,7 @@ void SteamConnection::_bind_methods() {
 }
 
 EResult SteamConnection::_raw_send(Ref<SteamPacketPeer> packet) {
-	int64 *pOutMessageNumber;
-	return SteamNetworkingSockets()->SendMessageToConnection(steam_connection, packet->data, packet->size, packet->transfer_mode, pOutMessageNumber);
+	return SteamNetworkingSockets()->SendMessageToConnection(steam_connection, packet->data, packet->size, packet->transfer_mode, nullptr);
 }
 
 // TODO change to return correct error
