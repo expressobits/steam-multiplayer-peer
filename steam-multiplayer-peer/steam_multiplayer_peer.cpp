@@ -238,30 +238,20 @@ bool SteamMultiplayerPeer::close_connection(const Ref<SteamConnection> connectio
 	return true;
 }
 
-void DebugOutputFunction(ESteamNetworkingSocketsDebugOutputType nType, const char *pszMsg) {
-	UtilityFunctions::print(pszMsg);
-}
-
 Error SteamMultiplayerPeer::create_host(int n_local_virtual_port, Array options) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_CANT_CREATE;
 	}
-
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
-
-	// SteamNetworkingUtils()->SetDebugOutputFunction(ESteamNetworkingSocketsDebugOutputType::k_ESteamNetworkingSocketsDebugOutputType_Everything, DebugOutputFunction);
-
-	unique_id = 1;
-
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, options.size(), these_options);
 	UtilityFunctions::print("create_host with ", listen_socket);
 	delete[] these_options;
 	if (listen_socket == k_HSteamListenSocket_Invalid) {
-		unique_id = 0;
 		return Error::ERR_CANT_CREATE;
 	}
+	unique_id = 1;
 	active_mode = MODE_SERVER;
 	connection_status = ConnectionStatus::CONNECTION_CONNECTED;
 	return Error::OK;
@@ -342,25 +332,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 
 	// Full connection info.
 	SteamNetConnectionInfo_t connection_info = call_data->m_info;
-
-	// Move connection info into a dictionary
-	Dictionary connection;
-	char identity[STEAM_BUFFER_SIZE];
-	connection_info.m_identityRemote.ToString(identity, STEAM_BUFFER_SIZE);
-	connection["identity"] = identity;
-	connection["user_data"] = (uint64_t)connection_info.m_nUserData;
-	connection["listen_socket"] = connection_info.m_hListenSocket;
-	char ip_address[STEAM_BUFFER_SIZE];
-	connection_info.m_addrRemote.ToString(ip_address, STEAM_BUFFER_SIZE, true);
-	connection["remote_address"] = ip_address;
-	connection["remote_pop"] = connection_info.m_idPOPRemote;
-	connection["pop_relay"] = connection_info.m_idPOPRelay;
-	connection["connection_state"] = connection_info.m_eState;
-	connection["end_reason"] = connection_info.m_eEndReason;
-	connection["end_debug"] = connection_info.m_szEndDebug;
-	connection["debug_description"] = connection_info.m_szConnectionDescription;
-	int old_state = call_data->m_eOldState;
-	//emit_signal("network_connection_status_changed", connect_handle, connection, old_state);
 
 	// A new connection arrives on a listen socket.
 	if (connection_info.m_hListenSocket && call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_None && call_data->m_info.m_eState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting) {
