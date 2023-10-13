@@ -339,9 +339,7 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		if (!_is_server())
 		{
 			connection_status = ConnectionStatus::CONNECTION_CONNECTED;
-			SteamConnection::PingPayload payload = SteamConnection::PingPayload();
-			payload.peer_id = unique_id;
-			Error err = connections_by_steamId64[steam_id]->ping(payload);
+			Error err = connections_by_steamId64[steam_id]->send_peer(unique_id);
 		}
 	}
 
@@ -439,9 +437,9 @@ void SteamMultiplayerPeer::_process_message(const SteamNetworkingMessage_t *msg)
 }
 
 void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
-	ERR_FAIL_COND_MSG(sizeof(SteamConnection::PingPayload) != msg->GetSize(), "Payload is the wrong size for a ping.");
+	ERR_FAIL_COND_MSG(sizeof(SteamConnection::SetupPeerPayload) != msg->GetSize(), "Payload is the wrong size for a ping.");
 
-	SteamConnection::PingPayload *receive = (SteamConnection::PingPayload *)msg->GetData();
+	SteamConnection::SetupPeerPayload *receive = (SteamConnection::SetupPeerPayload *)msg->GetData();
 	uint64_t steam_id = msg->m_identityPeer.GetSteamID64();
 
 	Ref<SteamConnection> connection = connections_by_steamId64[steam_id];
@@ -452,9 +450,7 @@ void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
 		}
 		if(_is_server())
 		{
-			SteamConnection::PingPayload payload = SteamConnection::PingPayload();
-			payload.peer_id = unique_id;
-			Error err = connection->ping(payload);
+			Error err = connection->send_peer(unique_id);
 			emit_signal("peer_connected", connection->peer_id);
 		}
 		else

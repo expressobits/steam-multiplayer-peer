@@ -66,13 +66,19 @@ SteamConnection::~SteamConnection() {
 	}
 }
 
-Error SteamConnection::ping() {
-	PingPayload p = PingPayload();
-    return ping(p);
+Error SteamConnection::request_peer() {
+	SetupPeerPayload payload = SetupPeerPayload();
+    return _send_setup_peer(payload);
 }
 
-Error SteamConnection::ping(const PingPayload &p) {
-	Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer((void *) &p, sizeof(PingPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE)));
+Error SteamConnection::send_peer(uint32_t peer_id) {
+	SteamConnection::SetupPeerPayload payload = SteamConnection::SetupPeerPayload();
+	payload.peer_id = peer_id;
+	return _send_setup_peer(payload);
+}
+
+Error SteamConnection::_send_setup_peer(const SetupPeerPayload payload) {
+	Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer((void *) &payload, sizeof(SetupPeerPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE)));
     return send(packet);
 }
 
