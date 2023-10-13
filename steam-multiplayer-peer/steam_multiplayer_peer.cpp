@@ -23,10 +23,10 @@ Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buf
 
 	delete next_received_packet;
 	next_received_packet = incoming_packets.front()->get();
-
-	*r_buffer_size = next_received_packet->size;
-	*r_buffer = (const uint8_t *)(&next_received_packet->data); //REVIEW A pointer to a reference? I feel like this is worthy of more consideration.
 	incoming_packets.pop_front();
+
+	*r_buffer = (const uint8_t *)(&next_received_packet->data); //REVIEW A pointer to a reference? I feel like this is worthy of more consideration.
+	*r_buffer_size = next_received_packet->size;
 
 	return OK;
 }
