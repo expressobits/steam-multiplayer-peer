@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/time.hpp>
 #include <memory>
 
+#include "steam/steam_api.h"
 
 #define MAX_STEAM_PACKET_SIZE k_cbMaxSteamNetworkingSocketsMessageSizeSend
 
@@ -18,14 +19,13 @@ public:
 	struct Packet {
         uint8_t data[MAX_STEAM_PACKET_SIZE];
         uint32_t size = 0;
-        SteamID sender = SteamID();
+        uint64_t sender;
         int transfer_mode = k_nSteamNetworkingSend_Reliable;    //Looks like a spot that might be served by an enum, eventually.
         Packet() {}
         Packet(const void *p_buffer, uint32_t p_buffer_size, int transferMode) {
             ERR_FAIL_COND_MSG(p_buffer_size > MAX_STEAM_PACKET_SIZE, "Error: Tried to send a packet larger than MAX_STEAM_PACKET_SIZE");
             memcpy(this->data, p_buffer, p_buffer_size);
             this->size = p_buffer_size;
-            this->sender.set_from_CSteamID(CSteamID());
             this->transfer_mode = transferMode;
         }
     };
