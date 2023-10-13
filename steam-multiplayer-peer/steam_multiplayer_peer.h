@@ -150,8 +150,8 @@ private:
     //may prefer we use a Ref<>, or failing that, Stroustrup would prefer a unique pointer of
     //some kind.
     // SteamConnection::Packet *next_send_packet = new SteamConnection::Packet;
-    SteamConnection::Packet *next_received_packet = new SteamConnection::Packet;    // gets deleted at the very first get_packet request
-	List<SteamConnection::Packet *> incoming_packets;
+    Ref<SteamPacketPeer> next_received_packet;    // gets deleted at the very first get_packet request
+	List<Ref<SteamPacketPeer>> incoming_packets;
 	const int _get_steam_transfer_flag();
 	ConnectionStatus connection_status = ConnectionStatus::CONNECTION_DISCONNECTED;
 

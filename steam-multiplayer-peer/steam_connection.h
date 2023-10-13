@@ -6,7 +6,7 @@
 #include <godot_cpp/classes/time.hpp>
 #include <memory>
 
-#include "steam/steam_api.h"
+#include "steam_packet_peer.h"
 
 #define MAX_STEAM_PACKET_SIZE k_cbMaxSteamNetworkingSocketsMessageSizeSend
 
@@ -16,19 +16,6 @@ class SteamConnection : public RefCounted {
 	GDCLASS(SteamConnection, RefCounted)
 
 public:
-	struct Packet {
-        uint8_t data[MAX_STEAM_PACKET_SIZE];
-        uint32_t size = 0;
-        uint64_t sender;
-        int transfer_mode = k_nSteamNetworkingSend_Reliable;    //Looks like a spot that might be served by an enum, eventually.
-        Packet() {}
-        Packet(const void *p_buffer, uint32_t p_buffer_size, int transferMode) {
-            ERR_FAIL_COND_MSG(p_buffer_size > MAX_STEAM_PACKET_SIZE, "Error: Tried to send a packet larger than MAX_STEAM_PACKET_SIZE");
-            memcpy(this->data, p_buffer, p_buffer_size);
-            this->size = p_buffer_size;
-            this->transfer_mode = transferMode;
-        }
-    };
 
     struct PingPayload {
         uint32_t peer_id = -1;
@@ -44,13 +31,13 @@ public:
     //How is this best used with smart pointers?
     //
     //Looks like it can be done, but we'll need to look at where the packets come from, and how they're used, to determine the right kind.
-    List<Packet *> pending_retry_packets;
+    List<Ref<SteamPacketPeer>> pending_retry_packets;
 
 private:
-    EResult _raw_send(Packet* packet);
+    EResult _raw_send(Ref<SteamPacketPeer> packet);
     String _convert_eresult_to_string(EResult e);
     Error _send_pending();
-    void _add_packet(Packet* packet);
+    void _add_packet(Ref<SteamPacketPeer> packet);
 
 protected:
 	static void _bind_methods();
@@ -59,7 +46,7 @@ public:
     // REVIEW Enetpeer contains broadcast method (Research for method in steam sockets)
     // void broadcast(enet_uint8 p_channel, ENetPacket *p_packet);
 	bool operator==(const SteamConnection &data);
-    Error send(Packet* packet);
+    Error send(Ref<SteamPacketPeer> packet);
     void flush();
 	SteamConnection(uint64_t steam_id);
 	SteamConnection() {}

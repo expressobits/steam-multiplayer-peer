@@ -4,7 +4,7 @@
 void SteamConnection::_bind_methods() {
 }
 
-EResult SteamConnection::_raw_send(Packet *packet) {
+EResult SteamConnection::_raw_send(Ref<SteamPacketPeer> packet) {
 	int64 *pOutMessageNumber;
 	return SteamNetworkingSockets()->SendMessageToConnection(steam_connection, packet->data, packet->size, packet->transfer_mode, pOutMessageNumber);
 }
@@ -13,11 +13,12 @@ EResult SteamConnection::_raw_send(Packet *packet) {
 Error SteamConnection::_send_pending() {
 	while (pending_retry_packets.size() > 0) {
 		UtilityFunctions::print("try _raw_send");
-		Packet *packet = pending_retry_packets.front()->get();
+		Ref<SteamPacketPeer> packet = pending_retry_packets.front()->get();
+		UtilityFunctions::print("pending_retry_packets.front()->get() ok");
 		EResult errorCode = _raw_send(packet);
 		UtilityFunctions::print("_send_pending packet with sucess!");
 		if (errorCode == k_EResultOK) {
-			delete packet;
+			//delete packet;
 			pending_retry_packets.pop_front();
 			UtilityFunctions::print("pending_retry_packets.pop_front()");
 		} else {
@@ -28,7 +29,7 @@ Error SteamConnection::_send_pending() {
 				//break, retry send later
 			} else {
 				WARN_PRINT(String("Send Error (Unreliable, won't retry): ") + errorString);
-				delete packet;
+				//delete packet;
 				pending_retry_packets.pop_front();
 				//toss unreliable packet, move on
 			}
@@ -38,17 +39,18 @@ Error SteamConnection::_send_pending() {
 	return OK;
 }
 
-void SteamConnection::_add_packet(Packet *packet) {
+void SteamConnection::_add_packet(Ref<SteamPacketPeer> packet) {
 	pending_retry_packets.push_back(packet);
 }
 
-Error SteamConnection::send(Packet *packet) {
+Error SteamConnection::send(Ref<SteamPacketPeer> packet) {
 	_add_packet(packet);
 	return _send_pending();
 }
 
 void SteamConnection::flush() {
 	ERR_FAIL_COND_MSG(steam_connection == k_HSteamNetConnection_Invalid, "The Steam Connections is invalid for flush!");
+	UtilityFunctions::print("flush messages!");
 	SteamNetworkingSockets()->FlushMessagesOnConnection(steam_connection);
 }
 
@@ -65,8 +67,9 @@ SteamConnection::SteamConnection(uint64_t steam_id) {
 SteamConnection::~SteamConnection() {
 	SteamNetworkingSockets()->CloseConnection(this->steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic, "Disconnect Default!", true);
 	while (pending_retry_packets.size()) {
-		delete pending_retry_packets.front()->get();
+		Ref<SteamPacketPeer> p = pending_retry_packets.front()->get();
 		pending_retry_packets.pop_front();
+		//memdelete(SteamPacketPeer, p);
 	}
 }
 
@@ -77,7 +80,7 @@ Error SteamConnection::ping() {
 
 Error SteamConnection::ping(const PingPayload &p) {
 	UtilityFunctions::print("ping message contains ",sizeof(PingPayload), " bytes");
-	Packet* packet = new Packet((void *) &p, sizeof(PingPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE);
+	Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer((void *) &p, sizeof(PingPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE)));
     return send(packet);
 }
 

@@ -21,7 +21,7 @@ SteamMultiplayerPeer::~SteamMultiplayerPeer() {
 Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) {
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, ERR_UNAVAILABLE, "No incoming packets available.");
 
-	delete next_received_packet;
+	//delete next_received_packet;
 	next_received_packet = incoming_packets.front()->get();
 	incoming_packets.pop_front();
 
@@ -46,7 +46,7 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 	if (target_peer == 0) {
 		Error returnValue = OK;
 		for (HashMap<uint64_t, Ref<SteamConnection>>::Iterator E = connections_by_steamId64.begin(); E; ++E) {
-			SteamConnection::Packet *packet = new SteamConnection::Packet(p_buffer, p_buffer_size, transferMode);
+			Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer(p_buffer, p_buffer_size, transferMode)));
 			Error errorCode = E->value->send(packet);
 			if (errorCode != OK) {
 				returnValue = errorCode;
@@ -54,7 +54,7 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 		}
 		return returnValue;
 	} else {
-		SteamConnection::Packet *packet = new SteamConnection::Packet(p_buffer, p_buffer_size, transferMode);
+		Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer(p_buffer, p_buffer_size, transferMode)));
 		return get_connection_by_peer(target_peer)->send(packet);
 	}
 }
@@ -438,7 +438,7 @@ void SteamMultiplayerPeer::add_connection(const uint64_t steam_id, HSteamNetConn
 void SteamMultiplayerPeer::_process_message(const SteamNetworkingMessage_t *msg) {
 	ERR_FAIL_COND_MSG(msg->GetSize() > MAX_STEAM_PACKET_SIZE, "Packet too large to send,");
 
-	SteamConnection::Packet *packet = new SteamConnection::Packet;
+	Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer));
 	packet->sender = msg->m_identityPeer.GetSteamID64();
 	packet->size = msg->GetSize();
 	packet->transfer_mode = msg->m_nFlags;
