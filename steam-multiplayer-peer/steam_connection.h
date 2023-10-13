@@ -42,6 +42,7 @@ public:
 	bool operator==(const SteamConnection &data);
 	Error send(Ref<SteamPacketPeer> packet);
 	void flush();
+    bool close();
 	SteamConnection(uint64_t steam_id);
 	SteamConnection() {}
 	~SteamConnection();

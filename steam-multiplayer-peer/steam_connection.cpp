@@ -48,6 +48,22 @@ void SteamConnection::flush() {
 	SteamNetworkingSockets()->FlushMessagesOnConnection(steam_connection);
 }
 
+bool SteamConnection::close() {
+	if (SteamNetworkingSockets() == NULL) {
+		UtilityFunctions::printerr("SteamNetworkingSockets is null!");
+		return false;
+	}
+	if (steam_connection == k_HSteamNetConnection_Invalid) {
+		UtilityFunctions::printerr("Steam Connection is invalid!");
+		return false;
+	}
+	if (!SteamNetworkingSockets()->CloseConnection(steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic, "Failed to accept connection", false)) {
+		UtilityFunctions::printerr("Fail to close connection ", steam_id);
+		return false;
+	}
+	return true;
+}
+
 bool SteamConnection::operator==(const SteamConnection &other) {
 	return steam_id == other.steam_id;
 }

@@ -92,7 +92,6 @@ public:
 	MultiplayerPeer::ConnectionStatus _get_connection_status() const override;
 
 	bool close_listen_socket();
-	bool close_connection(const Ref<SteamConnection> connection);
 	Error create_host(int n_local_virtual_port, Array options);
 	Error create_client(uint64_t identity_remote, int n_remote_virtual_port, Array options);
 	bool get_identity(SteamNetworkingIdentity *p_identity);
@@ -103,7 +102,7 @@ public:
 	void _process_message(const SteamNetworkingMessage_t *msg);
 	void _process_ping(const SteamNetworkingMessage_t *msg);
 
-	uint64_t get_steam64_from_peer_id(int peer);    //Steam64 is a Steam ID
+	uint64_t get_steam64_from_peer_id(const uint32_t peer) const;    //Steam64 is a Steam ID
     int get_peer_id_from_steam64(uint64_t steamid);
 	void set_steam_id_peer(uint64_t steam_id, int peer_id);
 
