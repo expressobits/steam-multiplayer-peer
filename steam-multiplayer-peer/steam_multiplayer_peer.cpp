@@ -6,11 +6,9 @@
 
 using namespace godot;
 
-// Define Steam API constants
 #define STEAM_BUFFER_SIZE 255
 
 SteamMultiplayerPeer::SteamMultiplayerPeer() :
-		// Networking Sockets callbacks /////////////
 		callback_network_connection_status_changed(this, &SteamMultiplayerPeer::network_connection_status_changed) {
 }
 
@@ -41,8 +39,7 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 	ERR_FAIL_COND_V(active_mode == MODE_CLIENT && !peerId_to_steamId.has(1), ERR_BUG);
 	int transferMode = _get_steam_transfer_flag();
 
-	if(p_buffer_size > 0)
-	{
+	if (p_buffer_size > 0) {
 		UtilityFunctions::print("Packet");
 	}
 
@@ -52,7 +49,6 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 			SteamConnection::Packet *packet = new SteamConnection::Packet(p_buffer, p_buffer_size, transferMode);
 			Error errorCode = E->value->send(packet);
 			if (errorCode != OK) {
-				// DEBUG_DATA_SIGNAL_V("put_packet failed.", errorCode);
 				returnValue = errorCode;
 			}
 		}
@@ -131,7 +127,6 @@ void SteamMultiplayerPeer::_poll() {
 		if (count > 0) {
 			for (int i = 0; i < count; i++) {
 				SteamNetworkingMessage_t *msg = messages[i];
-				
 				if (get_peer_id_from_steam64(msg->m_identityPeer.GetSteamID64()) != -1) {
 					_process_message(msg);
 				} else {
@@ -257,7 +252,6 @@ Error SteamMultiplayerPeer::create_host(int n_local_virtual_port, Array options)
 	return Error::OK;
 }
 
-// REVIEW Problem with godot steam reference (in godot steam use const String& network_identity)
 Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote_virtual_port, Array options) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
