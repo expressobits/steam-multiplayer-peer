@@ -106,7 +106,7 @@ int32_t SteamMultiplayerPeer::_get_packet_peer() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), 1, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, 1, "No packets to receive.");
 
-	int32_t peer_id = connections_by_steamId64[incoming_packets.front()->get()->sender.to_int()]->peer_id;
+	int32_t peer_id = connections_by_steamId64[incoming_packets.front()->get()->sender]->peer_id;
 	return peer_id;
 }
 
@@ -120,7 +120,7 @@ void SteamMultiplayerPeer::_poll() {
 
 	SteamNetworkingMessage_t *messages[MAX_MESSAGE_COUNT];
 
-	for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
+	for (HashMap<uint64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
 		int64_t key = E->key;
 		Ref<SteamConnection> value = E->value;
 		int count = SteamNetworkingSockets()->ReceiveMessagesOnConnection(value->steam_connection, messages, MAX_MESSAGE_COUNT);
@@ -146,7 +146,7 @@ void SteamMultiplayerPeer::_close() {
 		return;
 	}
 
-	for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
+	for (HashMap<uint64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
 		const Ref<SteamConnection> connection = E->value;
 		// TODO On Enet disconnect all peers with
 		// peer_disconnect_now(0);
@@ -162,7 +162,6 @@ void SteamMultiplayerPeer::_close() {
 	active_mode = MODE_NONE;
 	unique_id = 0;
 	connection_status = CONNECTION_DISCONNECTED;
-	steam_id.set_from_CSteamID(CSteamID()); // = SteamID();
 }
 
 void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
@@ -345,14 +344,14 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_FindingRoute) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected) {
 
-		SteamID steam_id = call_data->m_info.m_identityRemote.GetSteamID();
+		uint64_t steam_id = call_data->m_info.m_identityRemote.GetSteamID().ConvertToUint64();
 		add_connection(steam_id, call_data->m_hConn);
 		if (!_is_server())
 		{
 			connection_status = ConnectionStatus::CONNECTION_CONNECTED;
 			SteamConnection::PingPayload payload = SteamConnection::PingPayload();
 			payload.peer_id = unique_id;
-			Error err = connections_by_steamId64[steam_id.to_int()]->ping(payload);
+			Error err = connections_by_steamId64[steam_id]->ping(payload);
 		}
 	}
 
@@ -428,19 +427,19 @@ Ref<SteamConnection> SteamMultiplayerPeer::get_connection_by_peer(int peer_id) {
 	return nullptr;
 }
 
-void SteamMultiplayerPeer::add_connection(const SteamID &steamId, HSteamNetConnection connection) {
-	ERR_FAIL_COND_MSG(steamId == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
+void SteamMultiplayerPeer::add_connection(const uint64_t steam_id, HSteamNetConnection connection) {
+	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID().ConvertToUint64(), "Cannot add self as a new peer.");
 
-	Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steamId)));
+	Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steam_id)));
 	connection_data->steam_connection = connection;
-	connections_by_steamId64[steamId.to_int()] = connection_data;
+	connections_by_steamId64[steam_id] = connection_data;
 }
 
 void SteamMultiplayerPeer::_process_message(const SteamNetworkingMessage_t *msg) {
 	ERR_FAIL_COND_MSG(msg->GetSize() > MAX_STEAM_PACKET_SIZE, "Packet too large to send,");
 
 	SteamConnection::Packet *packet = new SteamConnection::Packet;
-	packet->sender.set_from_CSteamID(msg->m_identityPeer.GetSteamID());
+	packet->sender = msg->m_identityPeer.GetSteamID64();
 	packet->size = msg->GetSize();
 	packet->transfer_mode = msg->m_nFlags;
 
@@ -453,13 +452,13 @@ void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
 	ERR_FAIL_COND_MSG(sizeof(SteamConnection::PingPayload) != msg->GetSize(), "Payload is the wrong size for a ping.");
 
 	SteamConnection::PingPayload *receive = (SteamConnection::PingPayload *)msg->GetData();
-	SteamID steam_id = msg->m_identityPeer.GetSteamID();
+	uint64_t steam_id = msg->m_identityPeer.GetSteamID64();
 
-	Ref<SteamConnection> connection = connections_by_steamId64[steam_id.to_int()];
+	Ref<SteamConnection> connection = connections_by_steamId64[steam_id];
 
 	if (receive->peer_id != -1) {
 		if (connection->peer_id == -1) {
-			set_steam_id_peer(msg->m_identityPeer.GetSteamID(), receive->peer_id);
+			set_steam_id_peer(steam_id, receive->peer_id);
 		}
 		if(_is_server())
 		{
@@ -479,7 +478,7 @@ uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(int peer) {
 	if (peer == this->unique_id) {
 		return SteamUser()->GetSteamID().ConvertToUint64();
 	} else if (peerId_to_steamId.find(peer) == peerId_to_steamId.end()) {
-		return peerId_to_steamId[peer]->steam_id.to_int();
+		return peerId_to_steamId[peer]->steam_id;
 	} else
 		return -1;
 }
@@ -494,20 +493,20 @@ int SteamMultiplayerPeer::get_peer_id_from_steam64(uint64_t steamid) {
 }
 
 //Should this be by reference?
-int SteamMultiplayerPeer::get_peer_id_from_steam_id(SteamID &steamid) const {
-	if (steamid == SteamID(SteamUser()->GetSteamID())) {
-		return this->unique_id;
-	} else if (connections_by_steamId64.has(steamid.to_int())) {
-		return connections_by_steamId64[steamid.to_int()]->peer_id;
-	} else
-		return -1;
-}
+// int SteamMultiplayerPeer::get_peer_id_from_steam_id(SteamID &steamid) const {
+// 	if (steamid == SteamID(SteamUser()->GetSteamID())) {
+// 		return this->unique_id;
+// 	} else if (connections_by_steamId64.has(steamid.to_int())) {
+// 		return connections_by_steamId64[steamid.to_int()]->peer_id;
+// 	} else
+// 		return -1;
+// }
 
-void SteamMultiplayerPeer::set_steam_id_peer(SteamID steam_id, int peer_id) {
-	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID(), "Cannot add self as a new peer.");
-	ERR_FAIL_COND_MSG(connections_by_steamId64.has(steam_id.to_int()) == false, "Steam ID missing");
+void SteamMultiplayerPeer::set_steam_id_peer(uint64_t steam_id, int peer_id) {
+	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID().ConvertToUint64(), "Cannot add self as a new peer.");
+	ERR_FAIL_COND_MSG(connections_by_steamId64.has(steam_id) == false, "Steam ID missing");
 
-	Ref<SteamConnection> con = connections_by_steamId64[steam_id.to_int()];
+	Ref<SteamConnection> con = connections_by_steamId64[steam_id];
 	if (con->peer_id == -1) {
 		con->peer_id = peer_id;
 		peerId_to_steamId[peer_id] = con;
@@ -515,7 +514,7 @@ void SteamMultiplayerPeer::set_steam_id_peer(SteamID steam_id, int peer_id) {
 		//peer already exists, so nothing happens
 	} else {
 		// REVIEW Debug messages
-		UtilityFunctions::print("Steam ID detected with wrong peer ID: ", (long int)steam_id.to_int());
+		UtilityFunctions::print("Steam ID detected with wrong peer ID: ", (long int)steam_id);
 		UtilityFunctions::print("Peer ID was: ", con->peer_id);
 		UtilityFunctions::print("Trying to set as: ", peer_id);
 	}
@@ -531,8 +530,8 @@ int SteamMultiplayerPeer::get_listen_socket() const {
 
 Dictionary SteamMultiplayerPeer::get_peer_map() {
 	Dictionary output;
-	for (HashMap<int64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
-		output[E->value->peer_id] = E->value->steam_id.to_int();
+	for (HashMap<uint64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
+		output[E->value->peer_id] = E->value->steam_id;
 	}
 	return output;
 }

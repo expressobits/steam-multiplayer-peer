@@ -27,7 +27,6 @@ private:
 	Mode active_mode = MODE_NONE;
 	uint32_t unique_id = 0;
 	_FORCE_INLINE_ bool _is_active() const { return active_mode != MODE_NONE; }
-	SteamID steam_id = SteamID();
 	int32_t target_peer = -1;
 	TransferMode transfer_mode = TRANSFER_MODE_RELIABLE;
 
@@ -99,15 +98,14 @@ public:
 	bool get_identity(SteamNetworkingIdentity *p_identity);
 	const SteamNetworkingConfigValue_t *convert_options_array(Array options);
 	Ref<SteamConnection> get_connection_by_peer(int peer_id);
-	void add_connection(const SteamID &steamId, HSteamNetConnection connection);
+	void add_connection(const uint64_t steam_id, HSteamNetConnection connection);
 
 	void _process_message(const SteamNetworkingMessage_t *msg);
 	void _process_ping(const SteamNetworkingMessage_t *msg);
 
 	uint64_t get_steam64_from_peer_id(int peer);    //Steam64 is a Steam ID
     int get_peer_id_from_steam64(uint64_t steamid);
-    int get_peer_id_from_steam_id(SteamID& steamid) const;
-	void set_steam_id_peer(SteamID steam_id, int peer_id);
+	void set_steam_id_peer(uint64_t steam_id, int peer_id);
 
 	void set_listen_socket(const int listen_socket);
 	int get_listen_socket() const;
@@ -143,7 +141,7 @@ public:
 	}
 
 private:
-	HashMap<int64_t, Ref<SteamConnection>> connections_by_steamId64;
+	HashMap<uint64_t, Ref<SteamConnection>> connections_by_steamId64;
 	HashMap<int, Ref<SteamConnection>> peerId_to_steamId;
 	HSteamListenSocket listen_socket;
 	HSteamNetConnection connection;

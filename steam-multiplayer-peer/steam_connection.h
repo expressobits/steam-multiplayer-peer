@@ -6,7 +6,6 @@
 #include <godot_cpp/classes/time.hpp>
 #include <memory>
 
-#include "steam_id.h"
 
 #define MAX_STEAM_PACKET_SIZE k_cbMaxSteamNetworkingSocketsMessageSizeSend
 
@@ -36,12 +35,11 @@ public:
     };
 
 	bool m_bActive;					// Is this slot in use? Or is it available for new connections?
-	SteamID steam_id;				// What is the steamid of the player?
+	uint64_t steam_id;				// What is the steamid of the player?
 	HSteamNetConnection steam_connection;    // The handle for the connection to the player
 	uint64 m_ulTickCountLastData;	// What was the last time we got data from the player?
     int peer_id;
     uint64_t last_msg_timestamp;
-    SteamNetworkingIdentity networkIdentity;
 
     //How is this best used with smart pointers?
     //
@@ -63,7 +61,7 @@ public:
 	bool operator==(const SteamConnection &data);
     Error send(Packet* packet);
     void flush();
-	SteamConnection(SteamID steam_id);
+	SteamConnection(uint64_t steam_id);
 	SteamConnection() {}
 	~SteamConnection();
 
