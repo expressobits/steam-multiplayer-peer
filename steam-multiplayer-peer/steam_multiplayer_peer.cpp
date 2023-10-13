@@ -347,15 +347,8 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 
 		SteamID steam_id = call_data->m_info.m_identityRemote.GetSteamID();
 		add_connection(steam_id, call_data->m_hConn);
-
-		if (_is_server()) {
-			
-			//Error err = connections_by_steamId64[steam_id.to_int()]->ping();
-			//set_steam_id_peer(steam_id, 2);
-		}
-		else
+		if (!_is_server())
 		{
-			//set_steam_id_peer(steam_id, 1);
 			connection_status = ConnectionStatus::CONNECTION_CONNECTED;
 			SteamConnection::PingPayload payload = SteamConnection::PingPayload();
 			payload.peer_id = unique_id;
