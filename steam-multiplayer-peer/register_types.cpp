@@ -15,7 +15,7 @@
 
 using namespace godot;
 
-void initialize_godotsteampeer(ModuleInitializationLevel level) {
+void initialize_steam_multiplayer_peer(ModuleInitializationLevel level) {
 	if (level == MODULE_INITIALIZATION_LEVEL_SCENE) {
 		ClassDB::register_class<SteamPacketPeer>();
 		ClassDB::register_class<SteamConnection>();
@@ -23,17 +23,17 @@ void initialize_godotsteampeer(ModuleInitializationLevel level) {
 	}
 }
 
-void uninitialize_godotsteampeer(ModuleInitializationLevel level) {
+void uninitialize_steam_multiplayer_peer(ModuleInitializationLevel level) {
 	if (level == MODULE_INITIALIZATION_LEVEL_SCENE) {
 	}
 }
 
 extern "C" {
-GDExtensionBool GDE_EXPORT godotsteampeer_init(GDExtensionInterfaceGetProcAddress p_interface, const GDExtensionClassLibraryPtr p_library, GDExtensionInitialization *r_initialization) {
+GDExtensionBool GDE_EXPORT steam_multiplayer_peer_init(GDExtensionInterfaceGetProcAddress p_interface, const GDExtensionClassLibraryPtr p_library, GDExtensionInitialization *r_initialization) {
 	godot::GDExtensionBinding::InitObject init_obj(p_interface, p_library, r_initialization);
 
-	init_obj.register_initializer(initialize_godotsteampeer);
-	init_obj.register_terminator(uninitialize_godotsteampeer);
+	init_obj.register_initializer(initialize_steam_multiplayer_peer);
+	init_obj.register_terminator(uninitialize_steam_multiplayer_peer);
 	init_obj.set_minimum_library_initialization_level(MODULE_INITIALIZATION_LEVEL_SCENE);
 
 	return init_obj.init();
