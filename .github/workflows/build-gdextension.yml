@@ -195,7 +195,7 @@ jobs:
           rm -rf *.exp *.lib
           cd ../../..
 
-          cp -n 'README.md' 'LICENSE.txt' 'steam-multiplayer-peer.gdextension' project/addons/steam-multiplayer-peer
+          cp -n 'README.md' 'LICENSE' 'steam-multiplayer-peer.gdextension' project/addons/steam-multiplayer-peer
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
