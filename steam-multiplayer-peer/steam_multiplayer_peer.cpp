@@ -160,7 +160,6 @@ void SteamMultiplayerPeer::_close() {
 }
 
 void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
-	UtilityFunctions::print("_disconnect_peer ", p_peer);
 	ERR_FAIL_COND(!_is_active() || !peerId_to_steamId.has(p_peer));
 	Ref<SteamConnection> connection = get_connection_by_peer(p_peer);
 	bool result = connection->close();
@@ -205,14 +204,13 @@ MultiplayerPeer::ConnectionStatus SteamMultiplayerPeer::_get_connection_status()
 
 bool SteamMultiplayerPeer::close_listen_socket() {
 	if (SteamNetworkingSockets() == NULL) {
-		UtilityFunctions::printerr("SteamNetworkingSockets is null!");
+		WARN_PRINT(String("SteamNetworkingSockets is null!"));
 		return false;
 	}
 	if (!SteamNetworkingSockets()->CloseListenSocket(listen_socket)) {
-		UtilityFunctions::printerr("Fail to close listen socket ", listen_socket);
+		WARN_PRINT(String("Fail to close listen socket "));
 		return false;
 	}
-	UtilityFunctions::print("Success for close listen socket ", listen_socket);
 	return true;
 }
 
@@ -499,9 +497,7 @@ void SteamMultiplayerPeer::set_steam_id_peer(uint64_t steam_id, int peer_id) {
 	} else if (con->peer_id == peer_id) {
 		//peer already exists, so nothing happens
 	} else {
-		UtilityFunctions::print("Steam ID detected with wrong peer ID: ", (long int)steam_id);
-		UtilityFunctions::print("Peer ID was: ", con->peer_id);
-		UtilityFunctions::print("Trying to set as: ", peer_id);
+		WARN_PRINT(String("Steam ID detected with wrong peer ID!"));
 	}
 }
 
