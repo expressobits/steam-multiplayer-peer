@@ -168,7 +168,7 @@ jobs:
           PATH=/opt/buildroot/bin:$PATH scons target='${{ matrix.opts.target }}' platform='${{ matrix.opts.platform }}' arch='${{ matrix.opts.arch }}' ${{ matrix.opts.args }} -j2
           ls -la bin/
       - name: Strip bins
-        if: '!startsWith(matrix.opts.identifier, "windows-") && startsWith(matrix.opts.arch, "x86_")'
+        if: "!startsWith(matrix.opts.identifier, 'windows-'') && startsWith(matrix.opts.arch, 'x86_')"
         shell: sh
         run: |
           strip bin/*
