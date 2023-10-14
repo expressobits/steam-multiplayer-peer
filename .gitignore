@@ -12,4 +12,5 @@
 .vscode/
 bin/
 .sconsign.dblite
-steam-multiplayer-peer/sdk
+steam-multiplayer-peer/sdk/public
+steam-multiplayer-peer/sdk/redistributable_bin
