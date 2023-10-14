@@ -96,7 +96,6 @@ jobs:
           lfs: true
           path: "steamworks"
           repository: ${{ secrets.steamworks_sdk_repo }}
-          token: ${{ secrets.steamworks_sdk_repo_token }}
           ref: ${{ inputs.steamworks_sdk_tag }}
 
       - name: Copy Steamworks
