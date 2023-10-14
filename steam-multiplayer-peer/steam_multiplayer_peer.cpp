@@ -25,13 +25,12 @@ Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buf
 	next_received_packet = incoming_packets.front()->get();
 	incoming_packets.pop_front();
 
-	*r_buffer = (const uint8_t *)(&next_received_packet->data); //REVIEW A pointer to a reference? I feel like this is worthy of more consideration.
+	*r_buffer = (const uint8_t *)(&next_received_packet->data);
 	*r_buffer_size = next_received_packet->size;
 
 	return OK;
 }
 
-// REVIEW many differences for EnetPeer
 Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffer_size) {
 	ERR_FAIL_COND_V_MSG(!_is_active(), ERR_UNCONFIGURED, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(connection_status != CONNECTION_CONNECTED, ERR_UNCONFIGURED, "The multiplayer instance isn't currently connected to any server or client.");
@@ -161,13 +160,12 @@ void SteamMultiplayerPeer::_close() {
 }
 
 void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
-	UtilityFunctions::print("_disconnect_peer ",p_peer);
+	UtilityFunctions::print("_disconnect_peer ", p_peer);
 	ERR_FAIL_COND(!_is_active() || !peerId_to_steamId.has(p_peer));
 	Ref<SteamConnection> connection = get_connection_by_peer(p_peer);
 	bool result = connection->close();
 
-	if(!result)
-	{
+	if (!result) {
 		return;
 	}
 	connection->flush();
@@ -326,11 +324,8 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_FindingRoute) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_Connected) {
-
-		
 		add_connection(steam_id, call_data->m_hConn);
-		if (!_is_server())
-		{
+		if (!_is_server()) {
 			connection_status = ConnectionStatus::CONNECTION_CONNECTED;
 			Error err = connections_by_steamId64[steam_id]->send_peer(unique_id);
 		}
@@ -342,22 +337,16 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connected) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_ClosedByPeer) {
-
-		if(!_is_server())
-		{
+		if (!_is_server()) {
 			if (connection_status == CONNECTION_CONNECTED) {
 				emit_signal("peer_disconnected", 1);
 			}
 			close();
-		}
-		else
-		{
+		} else {
 			if (connections_by_steamId64.has(steam_id)) {
-				
 				Ref<SteamConnection> connection = connections_by_steamId64[steam_id];
 				uint32_t peer_id = connection->peer_id;
-				if(peer_id != -1)
-				{
+				if (peer_id != -1) {
 					emit_signal("peer_disconnected", peer_id);
 					peerId_to_steamId.erase(peer_id);
 				}
@@ -371,21 +360,16 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 	if ((call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connecting ||
 				call_data->m_eOldState == ESteamNetworkingConnectionState::k_ESteamNetworkingConnectionState_Connected) &&
 			call_data->m_info.m_eState == k_ESteamNetworkingConnectionState_ProblemDetectedLocally) {
-		if(!_is_server())
-		{
+		if (!_is_server()) {
 			if (connection_status == CONNECTION_CONNECTED) {
 				emit_signal("peer_disconnected", 1);
 			}
 			close();
-		}
-		else
-		{
+		} else {
 			if (connections_by_steamId64.has(steam_id)) {
-				
 				Ref<SteamConnection> connection = connections_by_steamId64[steam_id];
 				uint32_t peer_id = connection->peer_id;
-				if(peer_id != -1)
-				{
+				if (peer_id != -1) {
 					emit_signal("peer_disconnected", peer_id);
 					peerId_to_steamId.erase(peer_id);
 				}
@@ -477,13 +461,10 @@ void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
 		if (connection->peer_id == -1) {
 			set_steam_id_peer(steam_id, receive->peer_id);
 		}
-		if(_is_server())
-		{
+		if (_is_server()) {
 			Error err = connection->send_peer(unique_id);
 			emit_signal("peer_connected", connection->peer_id);
-		}
-		else
-		{
+		} else {
 			emit_signal("peer_connected", connection->peer_id);
 		}
 	}
@@ -518,7 +499,6 @@ void SteamMultiplayerPeer::set_steam_id_peer(uint64_t steam_id, int peer_id) {
 	} else if (con->peer_id == peer_id) {
 		//peer already exists, so nothing happens
 	} else {
-		// REVIEW Debug messages
 		UtilityFunctions::print("Steam ID detected with wrong peer ID: ", (long int)steam_id);
 		UtilityFunctions::print("Peer ID was: ", con->peer_id);
 		UtilityFunctions::print("Trying to set as: ", peer_id);

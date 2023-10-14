@@ -13,12 +13,12 @@ class SteamPacketPeer : public RefCounted {
 	GDCLASS(SteamPacketPeer, RefCounted)
 
 public:
-    uint8_t data[MAX_STEAM_PACKET_SIZE];
-    uint32_t size = 0;
-    uint64_t sender;
-    int transfer_mode = k_nSteamNetworkingSend_Reliable;    //Looks like a spot that might be served by an enum, eventually.
-    SteamPacketPeer() {}
-    SteamPacketPeer(const void *p_buffer, uint32_t p_buffer_size, int transferMode);
+	uint8_t data[MAX_STEAM_PACKET_SIZE];
+	uint32_t size = 0;
+	uint64_t sender;
+	int transfer_mode = k_nSteamNetworkingSend_Reliable; //Looks like a spot that might be served by an enum, eventually.
+	SteamPacketPeer() {}
+	SteamPacketPeer(const void *p_buffer, uint32_t p_buffer_size, int transferMode);
 
 protected:
 	static void _bind_methods();

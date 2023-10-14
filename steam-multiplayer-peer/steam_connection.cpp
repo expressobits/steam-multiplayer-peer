@@ -14,7 +14,6 @@ Error SteamConnection::_send_pending() {
 		Ref<SteamPacketPeer> packet = pending_retry_packets.front()->get();
 		EResult errorCode = _raw_send(packet);
 		if (errorCode == k_EResultOK) {
-			//delete packet;
 			pending_retry_packets.pop_front();
 		} else {
 			String errorString = _convert_eresult_to_string(errorCode);
@@ -24,7 +23,6 @@ Error SteamConnection::_send_pending() {
 				//break, retry send later
 			} else {
 				WARN_PRINT(String("Send Error (Unreliable, won't retry): ") + errorString);
-				//delete packet;
 				pending_retry_packets.pop_front();
 				//toss unreliable packet, move on
 			}
@@ -50,15 +48,15 @@ void SteamConnection::flush() {
 
 bool SteamConnection::close() {
 	if (SteamNetworkingSockets() == NULL) {
-		UtilityFunctions::printerr("SteamNetworkingSockets is null!");
+		WARN_PRINT(String("SteamNetworkingSockets is null!"));
 		return false;
 	}
 	if (steam_connection == k_HSteamNetConnection_Invalid) {
-		UtilityFunctions::printerr("Steam Connection is invalid!");
+		WARN_PRINT(String("Steam Connection is invalid!"));
 		return false;
 	}
 	if (!SteamNetworkingSockets()->CloseConnection(steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic, "Failed to accept connection", false)) {
-		UtilityFunctions::printerr("Fail to close connection ", steam_id);
+		WARN_PRINT(String("Fail to close connection!"));
 		return false;
 	}
 	return true;
@@ -84,7 +82,7 @@ SteamConnection::~SteamConnection() {
 
 Error SteamConnection::request_peer() {
 	SetupPeerPayload payload = SetupPeerPayload();
-    return _send_setup_peer(payload);
+	return _send_setup_peer(payload);
 }
 
 Error SteamConnection::send_peer(uint32_t peer_id) {
@@ -94,8 +92,8 @@ Error SteamConnection::send_peer(uint32_t peer_id) {
 }
 
 Error SteamConnection::_send_setup_peer(const SetupPeerPayload payload) {
-	Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer((void *) &payload, sizeof(SetupPeerPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE)));
-    return send(packet);
+	Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer((void *)&payload, sizeof(SetupPeerPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE)));
+	return send(packet);
 }
 
 // Long but simple: just return the type of the EResult as a Godot String

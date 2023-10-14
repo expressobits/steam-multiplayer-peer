@@ -102,14 +102,14 @@ public:
 	void _process_message(const SteamNetworkingMessage_t *msg);
 	void _process_ping(const SteamNetworkingMessage_t *msg);
 
-	uint64_t get_steam64_from_peer_id(const uint32_t peer) const;    //Steam64 is a Steam ID
-    int get_peer_id_from_steam64(uint64_t steamid);
+	uint64_t get_steam64_from_peer_id(const uint32_t peer) const; //Steam64 is a Steam ID
+	int get_peer_id_from_steam64(uint64_t steamid);
 	void set_steam_id_peer(uint64_t steam_id, int peer_id);
 
 	void set_listen_socket(const int listen_socket);
 	int get_listen_socket() const;
 
-    Dictionary get_peer_map();
+	Dictionary get_peer_map();
 
 	// Nagle's Algorithm: Inhibit the sending of new TCP segments, when new outgoing data arrives from the user,
 	// if any previously transmitted data on the connection remains unacknowledged
@@ -145,11 +145,7 @@ private:
 	HSteamListenSocket listen_socket;
 	HSteamNetConnection connection;
 
-	//TODO: Add steam_connection.h and include it. Note that "new" may be a problem, and Godot
-    //may prefer we use a Ref<>, or failing that, Stroustrup would prefer a unique pointer of
-    //some kind.
-    // SteamConnection::Packet *next_send_packet = new SteamConnection::Packet;
-    Ref<SteamPacketPeer> next_received_packet;    // gets deleted at the very first get_packet request
+	Ref<SteamPacketPeer> next_received_packet; // gets deleted at the very first get_packet request
 	List<Ref<SteamPacketPeer>> incoming_packets;
 	const int _get_steam_transfer_flag();
 	ConnectionStatus connection_status = ConnectionStatus::CONNECTION_DISCONNECTED;
