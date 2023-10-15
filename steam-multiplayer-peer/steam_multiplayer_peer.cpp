@@ -471,7 +471,7 @@ void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
 uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(const uint32_t peer_id) const {
 	if (peer_id == this->unique_id) {
 		return SteamUser()->GetSteamID().ConvertToUint64();
-	} else if (peerId_to_steamId.find(peer_id) == peerId_to_steamId.end()) {
+	} else if (peerId_to_steamId.has(peer_id)) {
 		return peerId_to_steamId[peer_id]->steam_id;
 	} else
 		return -1;
