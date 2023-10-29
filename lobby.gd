@@ -82,11 +82,7 @@ func refresh_lobby():
 		$Players/List.add_item(p)
 
 	$Players/Start.disabled = not multiplayer.is_server()
-
+	$Players/FindPublicIP.text = str(gamestate.lobby_id)
 
 func _on_start_pressed():
 	gamestate.begin_game()
-
-
-func _on_find_public_ip_pressed():
-	OS.shell_open("https://icanhazip.com/")

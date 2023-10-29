@@ -63,14 +63,14 @@ size_flags_vertical = 2
 layout_mode = 0
 offset_left = -124.0
 offset_top = 375.0
-offset_right = 128.0
+offset_right = 397.0
 offset_bottom = 429.0
 theme_override_constants/line_spacing = 6
-text = "If you want non-LAN clients to connect,
-make sure the port 10567 in UDP
-is forwarded on your router."
+text = "You must enter your lobby ID 
+so that another user 
+can connect to it"
 
-[node name="FindPublicIP" type="LinkButton" parent="Players"]
+[node name="FindPublicIP" type="Label" parent="Players"]
 layout_mode = 0
 offset_left = 168.0
 offset_top = 393.5
@@ -123,7 +123,7 @@ offset_bottom = 80.0
 size_flags_horizontal = 2
 size_flags_vertical = 0
 theme_override_font_sizes/font_size = 16
-text = "IP:"
+text = "Lobby id:"
 
 [node name="IPAddress" type="LineEdit" parent="Connect"]
 layout_mode = 0
@@ -133,7 +133,7 @@ offset_right = 173.0
 offset_bottom = 109.0
 size_flags_horizontal = 2
 size_flags_vertical = 2
-text = "127.0.0.1"
+placeholder_text = "Lobby Id Here"
 
 [node name="Host" type="Button" parent="Connect"]
 layout_mode = 0
@@ -168,6 +168,5 @@ theme_override_colors/font_color = Color(0.820312, 0.291595, 0.291595, 1)
 [node name="ErrorDialog" type="AcceptDialog" parent="."]
 
 [connection signal="pressed" from="Players/Start" to="." method="_on_start_pressed"]
-[connection signal="pressed" from="Players/FindPublicIP" to="." method="_on_find_public_ip_pressed"]
 [connection signal="pressed" from="Connect/Host" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="Connect/Join" to="." method="_on_join_pressed"]
