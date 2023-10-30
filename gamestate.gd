@@ -98,9 +98,9 @@ func host_game(new_player_name):
 	Steam.createLobby(Steam.LOBBY_TYPE_PUBLIC)
 
 
-func join_game(ip, new_player_name):
+func join_game(lobby_id, new_player_name):
 	player_name = new_player_name
-	Steam.joinLobby(ip)
+	Steam.joinLobby(int(lobby_id))
 
 
 func get_player_list():
