@@ -159,6 +159,7 @@ func _on_lobby_created(_connect: int, _lobby_id: int):
 	if _connect == 1:
 		lobby_id = _lobby_id
 		Steam.setLobbyData(_lobby_id, "name", "test_server")
+		create_socket()
 		print("Create lobby id:",str(lobby_id))
 	else:
 		print("Error on create lobby!")
@@ -187,8 +188,9 @@ func _on_lobby_joined(lobby: int, permissions: int, locked: bool, response: int)
 
 
 func create_socket():
+	print("test")
 	peer = SteamMultiplayerPeer.new()
-	peer.create_server(0, [])
+	peer.create_host(0, [])
 	multiplayer.set_multiplayer_peer(peer)
 
 
