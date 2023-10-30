@@ -35,9 +35,6 @@ func _on_join_pressed():
 		return
 
 	var ip = $Connect/IPAddress.text
-	if not ip.is_valid_ip_address():
-		$Connect/ErrorLabel.text = "Invalid IP address!"
-		return
 
 	$Connect/ErrorLabel.text = ""
 	$Connect/Host.disabled = true
