@@ -1,15 +1,7 @@
 # Multiplayer Bomber
 
-A multiplayer implementation of the classical bomberman game.
-One of the players should press "host", while the other
-should type in his address and press "play".
+Steam peer demo using bomberman godot demo
 
-Language: GDScript
+Use godot steam to create the lobby and steam-multiplayer-peer to create the sockets
 
-Renderer: GLES 2
-
-Check out this demo on the asset library: https://godotengine.org/asset-library/asset/139
-
-## Screenshots
-
-![Screenshot](screenshots/bomber.png)
+Attention: it only works in the editor running on Steam.
