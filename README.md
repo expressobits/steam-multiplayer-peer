@@ -1,5 +1,7 @@
 # Steam Sockets Multiplayer Peer para Godot 4 via GDExtension
 
+Demo in branch "demo": (https://github.com/expressobits/steam-multiplayer-peer/tree/demo)
+
 ### Can be added to a project that has GodotSteam
 It uses some codes that are close to GodotSteam's SteamNetworkingSockets(), but all aimed at integrating Godot 4's MultiplayerPeerExtension
 
