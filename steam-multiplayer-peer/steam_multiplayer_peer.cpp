@@ -160,13 +160,14 @@ void SteamMultiplayerPeer::_close() {
 }
 
 void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
-	ERR_FAIL_COND(!_is_active() || !peerId_to_steamId.has(p_peer));
+	ERR_FAIL_COND_V_MSG(!_is_active(), "The multiplayer instance isn't currently active.");
+	ERR_FAIL_COND_V_MSG(!peerId_to_steamId.has(p_peer), "'PeerConnection' not registered for steam_id. Try p_force true if need clear all multiplayer data.");
 	Ref<SteamConnection> connection = get_connection_by_peer(p_peer);
 	bool result = connection->close();
-
 	if (!result) {
 		return;
 	}
+
 	connection->flush();
 	connections_by_steamId64.erase(connection->steam_id);
 	peerId_to_steamId.erase(p_peer);
