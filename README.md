@@ -7,6 +7,15 @@ See demos in:
 Github: [Branch demos](https://github.com/expressobits/steam-multiplayer-peer/tree/demos)
 Godot Asset Lib: https://godotengine.org/asset-library/asset/2258
 
+## Tutorial and Learnings (How to use)
+
+See post of Michael Macha
+https://michaelmacha.wordpress.com/2024/04/08/godotsteam-and-steammultiplayerpeer/
+
+See too on youtube videos
+https://www.youtube.com/playlist?list=PLg_8mgEWE2p8ZA-AqUUJ3CYEtrRVFhl_v
+
+Thank you Michael!
 
 ## Features
 
