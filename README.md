@@ -24,8 +24,6 @@ Thank you Michael!
 ✔️ Use Steam Sockets (Low level like enet).
 
 ✔️ GDExtension (Easy to add your project)
-
-  - [[WIKI] How to test multiplayer demo](https://github.com/expressobits/inventory-system/wiki/How-to-test-multiplayer-demo)
  
 ✔️ No dependency with GodotSteam, but demo use GodotSteam to handle connections with lobbies (See lobbies tutorial in Godot Steam [here](https://godotsteam.com/tutorials/lobbies/)).
 
