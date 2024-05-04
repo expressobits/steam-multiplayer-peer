@@ -25,8 +25,8 @@ Godot Asset Lib: https://godotengine.org/asset-library/asset/2258
 
 | Differences | This SteamMultiplayerPeer | GodotSteam SteamMultiplayerPeer |
 |---|---|---|
-| Lib Type | GDExtension, add on your project libs to use easy. | C++ module, you need to use the precompiled ones from godotsteam or compile it yourself |
-| Steam Connection | Steam Sockets (https://partner.steamgames.com/doc/api/ISteamNetworkingSockets) Steam Sockets, Steam's lowest connection level, manages a connection  (It's very close to Enet, that's why I chose this approach for the plugin) | Steam Messages (https://partner.steamgames.com/doc/api/ISteamNetworkingMessages) Without a connection idea, the connection is managed by the lobby, determining the need to have steam lobbies. |
+| Lib Type | GDExtension, add on your project libs to use easy. | C++ module, you need to use the precompiled <br>ones from godotsteam or compile it yourself |
+| Steam Connection | Steam Sockets [Steam Docs](https://partner.steamgames.com/doc/api/ISteamNetworkingSockets)<br>Steam's lowest connection level,<br>manages a connection <br>(It's very close to Enet, <br>that's why I chose this approach for the plugin) | Steam Messages [Steam Docs](https://partner.steamgames.com/doc/api/ISteamNetworkingMessages)<br>Without a connection idea,<br>the connection is managed by the lobby,<br>determining the need to have steam lobbies. |
 | TODO  |  |  |
 
 ## Known issues
