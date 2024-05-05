@@ -3,9 +3,17 @@
 [![Documentation](https://img.shields.io/badge/documentation-no-red.svg)](todo-doc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](MIT)
 
-See demos in:
-Github: [Branch demos](https://github.com/expressobits/steam-multiplayer-peer/tree/demos)
 Godot Asset Lib: https://godotengine.org/asset-library/asset/2258
+
+## Branchs Map
+
+🪹[main](https://github.com/expressobits/steam-multiplayer-peer/tree/main): Contains C++ Plugin
+
+🪹[demos](https://github.com/expressobits/steam-multiplayer-peer/tree/demos): Same example as godot bomberman ([This](https://github.com/godotengine/godot-demo-projects/tree/master/networking/multiplayer_bomber)) But modified EnetPeer with SteamMultiplayerPeer
+
+🪹[addon](https://github.com/expressobits/steam-multiplayer-peer/tree/addon): Compiled version of the libs that are in the godot asset lib store.
+
+🪹[module](https://github.com/expressobits/steam-multiplayer-peer/tree/module): Same compiled version but just the addon folder, to be added as a git submodule
 
 ## Tutorial and Learnings (How to use)
 
@@ -32,7 +40,7 @@ Thank you Michael!
 
 | Differences | This SteamMultiplayerPeer | GodotSteam SteamMultiplayerPeer |
 |---|---|---|
-| Lib Type | GDExtension, add on your project libs to use easy. | C++ module, you need to use the precompiled <br>ones from godotsteam or compile it yourself |
+| Lib Type | GDExtension, add on your project libs to use easy. | C++ module, you need to use the precompiled <br>from godotsteam or compile it yourself |
 | Steam Connection | Steam Sockets [Steam Docs](https://partner.steamgames.com/doc/api/ISteamNetworkingSockets)<br>Steam's lowest connection level,<br>manages a connection <br>(It's very close to Enet, <br>that's why I chose this approach for the plugin) | Steam Messages [Steam Docs](https://partner.steamgames.com/doc/api/ISteamNetworkingMessages)<br>Without a connection idea,<br>the connection is managed by the lobby,<br>Need Steam lobbies. |
 | TODO  |  |  |
 
