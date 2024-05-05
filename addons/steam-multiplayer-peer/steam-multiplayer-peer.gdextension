@@ -1,6 +1,6 @@
 [configuration]
 entry_symbol = "steam_multiplayer_peer_init"
-compatibility_minimum = 4.2
+compatibility_minimum = 4.1
 
 [libraries]
 macos.debug = "osx/steam-multiplayer-peer.macos.template_debug.framework"
