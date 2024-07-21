@@ -10,12 +10,12 @@ steam_lib_path = "steam-multiplayer-peer/sdk/redistributable_bin"
 # Check our platform specifics
 if env['platform'] in ('macos', 'osx'):
     # Set the correct Steam library
-    steam_lib_path += "/osx"
+    steam_lib_path += "/macos"
     steamworks_library = 'libsteam_api.dylib'
 
 elif env['platform'] in ('linuxbsd', 'linux'):
     # Set correct Steam library
-    steam_lib_path += "/linux64" if env['arch'] == 'x86_64' else "/linux32"
+    steam_lib_path += "/linux" if env['arch'] == 'x86_64' else "/linux32"
     steamworks_library = 'libsteam_api.so'
 
 elif env['platform'] == "windows":
@@ -24,7 +24,7 @@ elif env['platform'] == "windows":
     # env.Append(ENV=os.environ)
 
     # Set correct Steam library
-    steam_lib_path += "/win64" if env['arch'] == 'x86_64' else ""
+    steam_lib_path += "/windows" if env['arch'] == 'x86_64' else ""
     steamworks_library = 'steam_api64.dll' if env['arch'] == 'x86_64' else 'steam_api.dll'
 
 # make sure our binding library is properly includes
