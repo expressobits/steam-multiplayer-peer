@@ -2,9 +2,16 @@ name: Build GDExtension
 on:
   workflow_dispatch:
       inputs:
-        inventory_tag:
-          required: false
-          type: string
+        steamworks_sdk_tag:
+            description: 'Steamworks SDK Tag:'
+            required: true
+            type: string
+            default: 'sdk-1.59'
+        godotsteam_version:
+            description: 'Steam Multiplayer Peer Tag:'
+            required: true
+            type: string
+            default: '0.0.1'
 
 env:
   LIBNAME: steam-multiplayer-peer
@@ -266,6 +273,20 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
+
+      - name: Checkout Steamworks SDK
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+          path: "steamworks"
+          repository: ${{ secrets.steamworks_sdk_repo }}
+          ref: ${{ inputs.steamworks_sdk_tag }}
+
+      - name: Copy Steamworks
+        shell: bash
+        run: |
+          cp -r steamworks/public steam-multiplayer-peer/sdk
+          cp -r steamworks/redistributable_bin steam-multiplayer-peer/sdk
 
 # Lint
       #- name: Setup clang-format
