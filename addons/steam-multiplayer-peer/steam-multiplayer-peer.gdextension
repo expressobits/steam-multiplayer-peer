@@ -1,22 +1,19 @@
 [configuration]
 entry_symbol = "steam_multiplayer_peer_init"
-compatibility_minimum = 4.1
+compatibility_minimum = 4.2
 
 [libraries]
-macos.debug = "osx/steam-multiplayer-peer.macos.template_debug.framework"
-macos.release = "osx/steam-multiplayer-peer.macos.template_release.framework"
-windows.debug.x86_64 = "win64/steam-multiplayer-peer.windows.template_debug.x86_64.dll"
-windows.debug.x86_32 = "win32/steam-multiplayer-peer.windows.template_debug.x86_32.dll"
-windows.release.x86_64 = "win64/steam-multiplayer-peer.windows.template_release.x86_64.dll"
-windows.release.x86_32 = "win32/steam-multiplayer-peer.windows.template_release.x86_32.dll"
-linux.debug.x86_64 = "linux64/libsteam-multiplayer-peer.linux.template_debug.x86_64.so"
-linux.debug.x86_32 = "linux32/libsteam-multiplayer-peer.linux.template_debug.x86_32.so"
-linux.release.x86_64 = "linux64/libsteam-multiplayer-peer.linux.template_release.x86_64.so"
-linux.release.x86_32 = "linux32/libsteam-multiplayer-peer.linux.template_release.x86_32.so"
+linux.debug.x86_64 = "linux/libsteam-multiplayer-peer.linux.template_debug.x86_64.so"
+linux.release.x86_64 = "linux/libsteam-multiplayer-peer.linux.template_release.x86_64.so"
+macos.debug = "macos/libsteam-multiplayer-peer.macos.template_debug.framework"
+macos.release = "macos/libsteam-multiplayer-peer.macos.template_release.framework"
+windows.debug.x86_64 = "windows/steam-multiplayer-peer.windows.template_debug.x86_64.dll"
+windows.release.x86_64 = "windows/steam-multiplayer-peer.windows.template_release.x86_64.dll"
+windows.debug.x86_32 = "windows/steam-multiplayer-peer.windows.template_debug.x86_32.dll"
+windows.release.x86_32 = "windows/steam-multiplayer-peer.windows.template_release.x86_32.dll"
 
 [dependencies]
-macos.universal = { "osx/libsteam_api.dylib": "" }
-windows.x86_64 = { "win64/steam_api64.dll": "" }
-windows.x86_32 = { "win32/steam_api.dll": "" }
-linux.x86_64 = { "linux64/libsteam_api.so": "" }
-linux.x86_32 = { "linux32/libsteam_api.so": "" }
+macos.universal = { "macos/libsteam_api.dylib": "" }
+windows.x86_64 = { "windows/steam_api64.dll": "" }
+windows.x86_32 = { "windows/steam_api.dll": "" }
+linux.x86_64 = { "linux/libsteam_api.so": "" }
