@@ -218,7 +218,7 @@ bool SteamMultiplayerPeer::close_listen_socket() {
 Error SteamMultiplayerPeer::create_host(int n_local_virtual_port, Array options) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
-		return Error::ERR_CANT_CREATE;
+		return Error::ERR_UNAVAILABLE;
 	}
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
 	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
@@ -236,7 +236,7 @@ Error SteamMultiplayerPeer::create_host(int n_local_virtual_port, Array options)
 Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote_virtual_port, Array options) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
-		return Error::ERR_CANT_CONNECT;
+		return Error::ERR_UNAVAILABLE;
 	}
 	unique_id = generate_unique_id();
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
@@ -249,7 +249,7 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 	delete[] these_options;
 	if (connection == k_HSteamNetConnection_Invalid) {
 		unique_id = 0;
-		return Error::ERR_CANT_CREATE;
+		return Error::ERR_CANT_CONNECT;
 	}
 
 	active_mode = MODE_CLIENT;
