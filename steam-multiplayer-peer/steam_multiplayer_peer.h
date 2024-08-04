@@ -29,6 +29,9 @@ private:
 	_FORCE_INLINE_ bool _is_active() const { return active_mode != MODE_NONE; }
 	int32_t target_peer = -1;
 	TransferMode transfer_mode = TRANSFER_MODE_RELIABLE;
+	bool no_nagle = false;
+	bool no_delay = false;
+	// bool as_relay = false;
 
 protected:
 	static void _bind_methods();
@@ -110,34 +113,16 @@ public:
 	int get_listen_socket() const;
 
 	Dictionary get_peer_map();
-
 	// Nagle's Algorithm: Inhibit the sending of new TCP segments, when new outgoing data arrives from the user,
 	// if any previously transmitted data on the connection remains unacknowledged
 	//
 	// Exists to reduce small packets and avoid counterproductive overhead
-	bool no_nagle = false;
-	void set_no_nagle(bool value) {
-		no_nagle = value;
-	}
-	bool get_no_nagle() {
-		return no_nagle;
-	}
-
-	bool no_delay = false; //What?
-	void set_no_delay(bool value) {
-		no_delay = value;
-	}
-	bool get_no_delay() {
-		return no_delay;
-	}
-
-	bool as_relay = false; //Again, what?
-	void set_as_relay(bool value) {
-		as_relay = value;
-	}
-	bool get_as_relay() {
-		return as_relay;
-	}
+	void set_no_nagle(const bool new_no_nagle);
+	bool get_no_nagle() const;
+	void set_no_delay(const bool new_no_delay);
+	bool get_no_delay() const;
+	// void set_as_relay(const bool new_as_relay);
+	// bool get_as_relay() const;
 
 private:
 	HashMap<uint64_t, Ref<SteamConnection>> connections_by_steamId64;

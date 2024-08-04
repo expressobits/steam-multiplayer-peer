@@ -267,8 +267,17 @@ void SteamMultiplayerPeer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_listen_socket", "listen_socket"), &SteamMultiplayerPeer::set_listen_socket);
 	ClassDB::bind_method(D_METHOD("get_listen_socket"), &SteamMultiplayerPeer::get_listen_socket);
 	ClassDB::bind_method(D_METHOD("get_steam64_from_peer_id", "peer_id"), &SteamMultiplayerPeer::get_steam64_from_peer_id);
+	ClassDB::bind_method(D_METHOD("set_no_nagle", "no_nagle"), &SteamMultiplayerPeer::set_no_nagle);
+	ClassDB::bind_method(D_METHOD("get_no_nagle"), &SteamMultiplayerPeer::get_no_nagle);
+	ClassDB::bind_method(D_METHOD("set_no_delay", "no_delay"), &SteamMultiplayerPeer::set_no_delay);
+	ClassDB::bind_method(D_METHOD("get_no_delay"), &SteamMultiplayerPeer::get_no_delay);
+	// ClassDB::bind_method(D_METHOD("set_as_relay", "as_relay"), &SteamMultiplayerPeer::set_as_relay);
+	// ClassDB::bind_method(D_METHOD("get_as_relay"), &SteamMultiplayerPeer::get_as_relay);
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "listen_socket"), "set_listen_socket", "get_listen_socket");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "no_nagle"), "set_no_nagle", "get_no_nagle");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "no_delay"), "set_no_delay", "get_no_delay");
+	// ADD_PROPERTY(PropertyInfo(Variant::BOOL, "as_relay"), "set_as_relay", "get_as_relay");
 
 	// NETWORKING SOCKETS SIGNALS ///////////////
 	ADD_SIGNAL(MethodInfo("network_connection_status_changed", PropertyInfo(Variant::INT, "connect_handle"), PropertyInfo(Variant::DICTIONARY, "connection"), PropertyInfo(Variant::INT, "old_state")));
@@ -277,7 +286,7 @@ void SteamMultiplayerPeer::_bind_methods() {
 const int SteamMultiplayerPeer::_get_steam_transfer_flag() {
 	MultiplayerPeer::TransferMode transfer_mode = get_transfer_mode();
 
-	int32_t flags = (k_nSteamNetworkingSend_NoNagle * no_nagle) | (k_nSteamNetworkingSend_NoDelay * no_delay); //interesting use
+	int32_t flags = (k_nSteamNetworkingSend_NoNagle * no_nagle) | (k_nSteamNetworkingSend_NoDelay * no_delay);
 
 	switch (transfer_mode) {
 		case TransferMode::TRANSFER_MODE_RELIABLE:
@@ -436,7 +445,7 @@ void SteamMultiplayerPeer::add_connection(const uint64_t steam_id, HSteamNetConn
 }
 
 void SteamMultiplayerPeer::_process_message(const SteamNetworkingMessage_t *msg) {
-	ERR_FAIL_COND_MSG(msg->GetSize() > MAX_STEAM_PACKET_SIZE, "Packet too large to send,");
+	ERR_FAIL_COND_MSG(msg->GetSize() > MAX_STEAM_PACKET_SIZE, "Packet too large to send!");
 
 	Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer));
 	packet->sender = msg->m_identityPeer.GetSteamID64();
@@ -517,3 +526,27 @@ Dictionary SteamMultiplayerPeer::get_peer_map() {
 	}
 	return output;
 }
+
+void SteamMultiplayerPeer::set_no_nagle(const bool new_no_nagle) {
+	no_nagle = new_no_nagle;
+}
+
+bool SteamMultiplayerPeer::get_no_nagle() const {
+	return no_nagle;
+}
+
+void SteamMultiplayerPeer::set_no_delay(const bool new_no_delay) {
+	no_delay = new_no_delay;
+}
+
+bool SteamMultiplayerPeer::get_no_delay() const {
+	return no_delay;
+}
+
+// void SteamMultiplayerPeer::set_as_relay(const bool new_as_relay) {
+// 	as_relay = new_as_relay;
+// }
+
+// bool SteamMultiplayerPeer::get_as_relay() const {
+// 	return as_relay;
+// }
