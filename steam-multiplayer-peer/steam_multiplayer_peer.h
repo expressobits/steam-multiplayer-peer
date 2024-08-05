@@ -9,6 +9,7 @@
 #include "steam/steam_api.h"
 #include "steam/steamnetworkingfakeip.h"
 #include "steam_connection.h"
+#include "steam_peer_config.h"
 
 using namespace godot;
 
@@ -95,8 +96,8 @@ public:
 	MultiplayerPeer::ConnectionStatus _get_connection_status() const override;
 
 	bool close_listen_socket();
-	Error create_host(int n_local_virtual_port, Array options);
-	Error create_client(uint64_t identity_remote, int n_remote_virtual_port, Array options);
+	Error create_host(int n_local_virtual_port, const Ref<SteamPeerConfig> config = nullptr);
+	Error create_client(uint64_t identity_remote, int n_remote_virtual_port, const Ref<SteamPeerConfig> config = nullptr);
 	bool get_identity(SteamNetworkingIdentity *p_identity);
 	const SteamNetworkingConfigValue_t *convert_options_array(Array options);
 	Ref<SteamConnection> get_connection_by_peer(int peer_id);
