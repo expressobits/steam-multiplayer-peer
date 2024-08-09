@@ -4,18 +4,18 @@
 
 #include <godot_cpp/variant/utility_functions.hpp>
 
-using namespace godot;
-
 #define STEAM_BUFFER_SIZE 255
 
 SteamMultiplayerPeer::SteamMultiplayerPeer() :
 		callback_network_connection_status_changed(this, &SteamMultiplayerPeer::network_connection_status_changed) {
+	configs = Ref<SteamPeerConfig>(memnew(SteamPeerConfig()));
 }
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {
 	if (_is_active()) {
 		close();
 	}
+	// memdelete(*config);
 }
 
 Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) {
@@ -215,15 +215,19 @@ bool SteamMultiplayerPeer::close_listen_socket() {
 	return true;
 }
 
-Error SteamMultiplayerPeer::create_host(int n_local_virtual_port, Array options) {
+Error SteamMultiplayerPeer::create_host(int n_local_virtual_port) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_UNAVAILABLE;
 	}
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
-	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
-	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, options.size(), these_options);
+
+	const SteamNetworkingConfigValue_t *these_options = configs->get_convert_options();
+
+	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, configs->size(), these_options);
+
 	delete[] these_options;
+
 	if (listen_socket == k_HSteamListenSocket_Invalid) {
 		return Error::ERR_CANT_CREATE;
 	}
@@ -233,20 +237,22 @@ Error SteamMultiplayerPeer::create_host(int n_local_virtual_port, Array options)
 	return Error::OK;
 }
 
-Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote_virtual_port, Array options) {
+Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote_virtual_port) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_UNAVAILABLE;
 	}
 	unique_id = generate_unique_id();
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
-	const SteamNetworkingConfigValue_t *these_options = convert_options_array(options);
 	SteamNetworkingIdentity p_remote_id;
 	p_remote_id.SetSteamID64(identity_remote);
 
-	connection = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, options.size(), these_options);
+	SteamNetworkingConfigValue_t *these_options = configs->get_convert_options();
+
+	connection = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, configs->size(), these_options);
 
 	delete[] these_options;
+
 	if (connection == k_HSteamNetConnection_Invalid) {
 		unique_id = 0;
 		return Error::ERR_CANT_CONNECT;
@@ -262,8 +268,8 @@ bool SteamMultiplayerPeer::get_identity(SteamNetworkingIdentity *p_identity) {
 }
 
 void SteamMultiplayerPeer::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("create_host", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::create_host);
-	ClassDB::bind_method(D_METHOD("create_client", "identity_remote", "n_local_virtual_port", "options"), &SteamMultiplayerPeer::create_client);
+	ClassDB::bind_method(D_METHOD("create_host", "n_local_virtual_port"), &SteamMultiplayerPeer::create_host, DEFVAL(nullptr));
+	ClassDB::bind_method(D_METHOD("create_client", "identity_remote", "n_local_virtual_port"), &SteamMultiplayerPeer::create_client, DEFVAL(nullptr));
 	ClassDB::bind_method(D_METHOD("set_listen_socket", "listen_socket"), &SteamMultiplayerPeer::set_listen_socket);
 	ClassDB::bind_method(D_METHOD("get_listen_socket"), &SteamMultiplayerPeer::get_listen_socket);
 	ClassDB::bind_method(D_METHOD("get_steam64_from_peer_id", "peer_id"), &SteamMultiplayerPeer::get_steam64_from_peer_id);
@@ -273,14 +279,22 @@ void SteamMultiplayerPeer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_no_delay"), &SteamMultiplayerPeer::get_no_delay);
 	// ClassDB::bind_method(D_METHOD("set_as_relay", "as_relay"), &SteamMultiplayerPeer::set_as_relay);
 	// ClassDB::bind_method(D_METHOD("get_as_relay"), &SteamMultiplayerPeer::get_as_relay);
+	ClassDB::bind_method(D_METHOD("set_configs", "configs"), &SteamMultiplayerPeer::set_configs);
+	ClassDB::bind_method(D_METHOD("get_configs"), &SteamMultiplayerPeer::get_configs);
+	ClassDB::bind_method(D_METHOD("set_config", "config", "value"), &SteamMultiplayerPeer::set_config);
+	ClassDB::bind_method(D_METHOD("clear_config", "config"), &SteamMultiplayerPeer::clear_config);
+	ClassDB::bind_method(D_METHOD("clear_all_configs"), &SteamMultiplayerPeer::clear_all_configs);
+
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "listen_socket"), "set_listen_socket", "get_listen_socket");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "no_nagle"), "set_no_nagle", "get_no_nagle");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "no_delay"), "set_no_delay", "get_no_delay");
 	// ADD_PROPERTY(PropertyInfo(Variant::BOOL, "as_relay"), "set_as_relay", "get_as_relay");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "configs"), "set_configs", "get_configs");
 
 	// NETWORKING SOCKETS SIGNALS ///////////////
 	ADD_SIGNAL(MethodInfo("network_connection_status_changed", PropertyInfo(Variant::INT, "connect_handle"), PropertyInfo(Variant::DICTIONARY, "connection"), PropertyInfo(Variant::INT, "old_state")));
+
 }
 
 const int SteamMultiplayerPeer::_get_steam_transfer_flag() {
@@ -389,46 +403,6 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 }
 
 // GODOT MULTIPLAYER PEER UTILS  ///////////////////
-//
-// Helper function to turn an array of options into an array of
-// SteamNetworkingConfigValue_t structs
-const SteamNetworkingConfigValue_t *SteamMultiplayerPeer::convert_options_array(Array options) {
-	// Get the number of option arrays in the array.
-	int options_size = options.size();
-	// Create the array for options.
-	SteamNetworkingConfigValue_t *option_array = new SteamNetworkingConfigValue_t[options_size];
-	// If there are options
-	if (options_size > 0) {
-		// Populate the options
-		for (int i = 0; i < options_size; i++) {
-			SteamNetworkingConfigValue_t this_option;
-			Array sent_option = options[i];
-			// Get the configuration value.
-			// This is a convoluted way of doing it but can't seem to cast the value
-			// as an enum so here we are.
-			ESteamNetworkingConfigValue this_value = ESteamNetworkingConfigValue((int)sent_option[0]);
-			if ((int)sent_option[1] == 1) {
-				this_option.SetInt32(this_value, sent_option[2]);
-			} else if ((int)sent_option[1] == 2) {
-				this_option.SetInt64(this_value, sent_option[2]);
-			} else if ((int)sent_option[1] == 3) {
-				this_option.SetFloat(this_value, sent_option[2]);
-			} else if ((int)sent_option[1] == 4) {
-				char *this_string = { 0 };
-				String passed_string = sent_option[2];
-				strcpy(this_string, passed_string.utf8().get_data());
-				this_option.SetString(this_value, this_string);
-			} else {
-				Object *this_pointer;
-				this_pointer = sent_option[2];
-				this_option.SetPtr(this_value, this_pointer);
-			}
-			option_array[i] = this_option;
-		}
-	}
-	return option_array;
-}
-
 Ref<SteamConnection> SteamMultiplayerPeer::get_connection_by_peer(int peer_id) {
 	if (peerId_to_steamId.has(peer_id))
 		return peerId_to_steamId[peer_id];
@@ -550,3 +524,23 @@ bool SteamMultiplayerPeer::get_no_delay() const {
 // bool SteamMultiplayerPeer::get_as_relay() const {
 // 	return as_relay;
 // }
+
+void SteamMultiplayerPeer::set_configs(const Ref<SteamPeerConfig> new_config) {
+	configs = new_config;
+}
+
+Ref<SteamPeerConfig> SteamMultiplayerPeer::get_configs() const {
+	return configs;
+}
+
+void SteamMultiplayerPeer::set_config(const SteamPeerConfig::SteamNetworkingConfig config, Variant value) {
+	configs->set_config(config, value);
+}
+
+void SteamMultiplayerPeer::clear_config(const SteamPeerConfig::SteamNetworkingConfig config) {
+	configs->clear_config(config);
+}
+
+void SteamMultiplayerPeer::clear_all_configs() {
+	configs->clear_all_configs();
+}

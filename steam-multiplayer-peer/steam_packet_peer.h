@@ -7,7 +7,7 @@
 
 #define MAX_STEAM_PACKET_SIZE k_cbMaxSteamNetworkingSocketsMessageSizeSend
 
-namespace godot {
+using namespace godot;
 
 class SteamPacketPeer : public RefCounted {
 	GDCLASS(SteamPacketPeer, RefCounted)
@@ -24,5 +24,4 @@ protected:
 	static void _bind_methods();
 };
 
-} //namespace godot
 #endif // STEAM_PACKET_PEER_H
