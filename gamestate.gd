@@ -188,13 +188,12 @@ func _on_lobby_joined(lobby: int, permissions: int, locked: bool, response: int)
 
 
 func create_socket():
-	print("test")
 	peer = SteamMultiplayerPeer.new()
-	peer.create_host(0, [])
+	peer.create_host(0)
 	multiplayer.set_multiplayer_peer(peer)
 
 
 func connect_socket(steam_id : int):
 	peer = SteamMultiplayerPeer.new()
-	peer.create_client(steam_id, 0, [])
+	peer.create_client(steam_id, 0)
 	multiplayer.set_multiplayer_peer(peer)
