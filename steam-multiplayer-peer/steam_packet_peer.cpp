@@ -1,7 +1,5 @@
 #include "steam_packet_peer.h"
 
-using namespace godot;
-
 void SteamPacketPeer::_bind_methods() {
 }
 

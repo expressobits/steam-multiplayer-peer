@@ -33,7 +33,7 @@ private:
 	bool no_nagle = false;
 	bool no_delay = false;
 	// bool as_relay = false;
-	Ref<SteamPeerConfig> config;
+	Ref<SteamPeerConfig> configs;
 
 protected:
 	static void _bind_methods();
@@ -143,6 +143,7 @@ public:
 		NETWORKING_CONFIG_ECN = k_ESteamNetworkingConfig_ECN,
 		NETWORKING_CONFIG_VALUE_FORCE32BIT = k_ESteamNetworkingConfigValue__Force32Bit
 	};
+	
 	SteamMultiplayerPeer();
 	~SteamMultiplayerPeer();
 	Error _get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) override;
@@ -198,8 +199,12 @@ public:
 	bool get_no_delay() const;
 	// void set_as_relay(const bool new_as_relay);
 	// bool get_as_relay() const;
-	void set_config(const Ref<SteamPeerConfig> new_config);
-	Ref<SteamPeerConfig> get_config() const;
+	/// Configs
+	void set_configs(const Ref<SteamPeerConfig> new_config);
+	Ref<SteamPeerConfig> get_configs() const;
+	void set_config(const SteamPeerConfig::SteamNetworkingConfig config, Variant value);
+	void clear_config(const SteamPeerConfig::SteamNetworkingConfig config);
+	void clear_all_configs();
 
 private:
 	HashMap<uint64_t, Ref<SteamConnection>> connections_by_steamId64;
@@ -215,7 +220,5 @@ private:
 	// Networking Sockets callbacks /////////
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
 };
-
-VARIANT_ENUM_CAST(SteamMultiplayerPeer::SteamNetworkingConfig);
 
 #endif // STEAM_MULTIPLAYER_PEER_H

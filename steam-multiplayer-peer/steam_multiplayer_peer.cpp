@@ -4,13 +4,11 @@
 
 #include <godot_cpp/variant/utility_functions.hpp>
 
-using namespace godot;
-
 #define STEAM_BUFFER_SIZE 255
 
 SteamMultiplayerPeer::SteamMultiplayerPeer() :
 		callback_network_connection_status_changed(this, &SteamMultiplayerPeer::network_connection_status_changed) {
-	config = Ref<SteamPeerConfig>(memnew(SteamPeerConfig()));
+	configs = Ref<SteamPeerConfig>(memnew(SteamPeerConfig()));
 }
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {
@@ -224,9 +222,9 @@ Error SteamMultiplayerPeer::create_host(int n_local_virtual_port) {
 	}
 	SteamNetworkingUtils()->InitRelayNetworkAccess();
 
-	const SteamNetworkingConfigValue_t *these_options = config->get_convert_options();
+	const SteamNetworkingConfigValue_t *these_options = configs->get_convert_options();
 
-	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, config->size(), these_options);
+	listen_socket = SteamNetworkingSockets()->CreateListenSocketP2P(n_local_virtual_port, configs->size(), these_options);
 
 	delete[] these_options;
 
@@ -249,9 +247,9 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 	SteamNetworkingIdentity p_remote_id;
 	p_remote_id.SetSteamID64(identity_remote);
 
-	SteamNetworkingConfigValue_t *these_options = config->get_convert_options();
+	SteamNetworkingConfigValue_t *these_options = configs->get_convert_options();
 
-	connection = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, config->size(), these_options);
+	connection = SteamNetworkingSockets()->ConnectP2P(p_remote_id, n_remote_virtual_port, configs->size(), these_options);
 
 	delete[] these_options;
 
@@ -281,89 +279,22 @@ void SteamMultiplayerPeer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_no_delay"), &SteamMultiplayerPeer::get_no_delay);
 	// ClassDB::bind_method(D_METHOD("set_as_relay", "as_relay"), &SteamMultiplayerPeer::set_as_relay);
 	// ClassDB::bind_method(D_METHOD("get_as_relay"), &SteamMultiplayerPeer::get_as_relay);
-	ClassDB::bind_method(D_METHOD("set_config", "config"), &SteamMultiplayerPeer::set_config);
-	ClassDB::bind_method(D_METHOD("get_config"), &SteamMultiplayerPeer::get_config);
+	ClassDB::bind_method(D_METHOD("set_configs", "configs"), &SteamMultiplayerPeer::set_configs);
+	ClassDB::bind_method(D_METHOD("get_configs"), &SteamMultiplayerPeer::get_configs);
+	ClassDB::bind_method(D_METHOD("set_config", "config", "value"), &SteamMultiplayerPeer::set_config);
+	ClassDB::bind_method(D_METHOD("clear_config", "config"), &SteamMultiplayerPeer::clear_config);
+	ClassDB::bind_method(D_METHOD("clear_all_configs"), &SteamMultiplayerPeer::clear_all_configs);
 
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "listen_socket"), "set_listen_socket", "get_listen_socket");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "no_nagle"), "set_no_nagle", "get_no_nagle");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "no_delay"), "set_no_delay", "get_no_delay");
 	// ADD_PROPERTY(PropertyInfo(Variant::BOOL, "as_relay"), "set_as_relay", "get_as_relay");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "config"), "set_config", "get_config");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "configs"), "set_configs", "get_configs");
 
 	// NETWORKING SOCKETS SIGNALS ///////////////
 	ADD_SIGNAL(MethodInfo("network_connection_status_changed", PropertyInfo(Variant::INT, "connect_handle"), PropertyInfo(Variant::DICTIONARY, "connection"), PropertyInfo(Variant::INT, "old_state")));
 
-	// NetworkingConfigValue Enums
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_INVALID);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_PACKET_LOSS_SEND);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_PACKET_LOSS_RECV);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_PACKET_LAG_SEND);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_PACKET_LAG_RECV);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_PACKET_REORDER_SEND);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_PACKET_REORDER_RECV);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_PACKET_REORDER_TIME);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_PACKET_DUP_SEND);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_PACKET_DUP_REVC);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_PACKET_DUP_TIME_MAX);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_PACKET_TRACE_MAX_BYTES);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_RATE_LIMIT_SEND_RATE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_RATE_LIMIT_SEND_BURST);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_RATE_LIMIT_RECV_RATE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_FAKE_RATE_LIMIT_RECV_BURST);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_OUT_OF_ORDER_CORRECTION_WINDOW_MICROSECONDS);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_CONNECTION_USER_DATA);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_TIMEOUT_INITIAL);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_TIMEOUT_CONNECTED);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SEND_BUFFER_SIZE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_RECV_BUFFER_SIZE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_RECV_BUFFER_MESSAGES);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_RECV_MAX_MESSAGE_SIZE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_RECV_MAX_SEGMENTS_PER_PACKET);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SEND_RATE_MIN);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SEND_RATE_MAX);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_NAGLE_TIME);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_IP_ALLOW_WITHOUT_AUTH);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_MTU_PACKET_SIZE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_MTU_DATA_SIZE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_UNENCRYPTED);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SYMMETRIC_CONNECT);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_LOCAL_VIRTUAL_PORT);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_DUAL_WIFI_ENABLE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_ENABLE_DIAGNOSTICS_UI);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SDR_CLIENT_CONSEC_PING_TIMEOUT_FAIL_INITIAL);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SDR_CLIENT_CONSEC_PING_TIMEOUT_FAIL);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SDR_CLIENT_MIN_PINGS_BEFORE_PING_ACCURATE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SDR_CLIENT_SINGLE_SOCKET);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SDR_CLIENT_FORCE_RELAY_CLUSTER);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SDR_CLIENT_DEV_TICKET);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SDR_CLIENT_FORCE_PROXY_ADDR);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SDR_CLIENT_FAKE_CLUSTER_PING);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_SDR_CLIENT_LIMIT_PING_PROBES_TO_NEAREST_N);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_LOG_LEVEL_ACK_RTT);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_LOG_LEVEL_PACKET_DECODE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_LOG_LEVEL_MESSAGE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_LOG_LEVEL_PACKET_GAPS);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_LOG_LEVEL_P2P_RENDEZVOUS);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_LOG_LEVEL_SRD_RELAY_PINGS);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_CALLBACK_CONNECTION_STATUS_CHANGED);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_CALLBACK_AUTH_STATUS_CHANGED);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_CALLBACK_RELAY_NETWORK_STATUS_CHANGED);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_CALLBACK_MESSAGE_SESSION_REQUEST);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_CALLBACK_MESSAGES_SESSION_FAILED);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_CALLBACK_CREATE_CONNECTION_SIGNALING);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_CALLBACK_FAKE_IP_RESULT);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_P2P_STUN_SERVER_LIST);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_P2P_TRANSPORT_ICE_ENABLE);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_P2P_TRANSPORT_ICE_PENALTY);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_P2P_TRANSPORT_SDR_PENALTY);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_P2P_TURN_SERVER_LIST);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_P2P_TURN_uSER_LIST);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_P2P_TURN_PASS_LIST);
-	//	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_P2P_TRANSPORT_LAN_BEACON_PENALTY);		// Commented out in the SDK
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_P2P_TRANSPORT_ICE_IMPLEMENTATION);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_ECN);
-	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_VALUE_FORCE32BIT);
 }
 
 const int SteamMultiplayerPeer::_get_steam_transfer_flag() {
@@ -594,10 +525,22 @@ bool SteamMultiplayerPeer::get_no_delay() const {
 // 	return as_relay;
 // }
 
-void SteamMultiplayerPeer::set_config(const Ref<SteamPeerConfig> new_config) {
-	config = new_config;
+void SteamMultiplayerPeer::set_configs(const Ref<SteamPeerConfig> new_config) {
+	configs = new_config;
 }
 
-Ref<SteamPeerConfig> SteamMultiplayerPeer::get_config() const {
-	return config;
+Ref<SteamPeerConfig> SteamMultiplayerPeer::get_configs() const {
+	return configs;
+}
+
+void SteamMultiplayerPeer::set_config(const SteamPeerConfig::SteamNetworkingConfig config, Variant value) {
+	configs->set_config(config, value);
+}
+
+void SteamMultiplayerPeer::clear_config(const SteamPeerConfig::SteamNetworkingConfig config) {
+	configs->clear_config(config);
+}
+
+void SteamMultiplayerPeer::clear_all_configs() {
+	configs->clear_all_configs();
 }
