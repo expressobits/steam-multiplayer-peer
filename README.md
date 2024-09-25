@@ -9,7 +9,7 @@ Godot Asset Lib: https://godotengine.org/asset-library/asset/2258
 
 🪹[main](https://github.com/expressobits/steam-multiplayer-peer/tree/main): Contains C++ Plugin
 
-🪹[demos](https://github.com/expressobits/steam-multiplayer-peer/tree/demos): Same example as godot bomberman ([This](https://github.com/godotengine/godot-demo-projects/tree/master/networking/multiplayer_bomber)) But modified EnetPeer with SteamMultiplayerPeer
+🪹[demos](https://github.com/expressobits/steam-multiplayer-peer/tree/demo): Same example as godot bomberman ([This](https://github.com/godotengine/godot-demo-projects/tree/master/networking/multiplayer_bomber)) But modified EnetPeer with SteamMultiplayerPeer
 
 🪹[addon](https://github.com/expressobits/steam-multiplayer-peer/tree/addon): Compiled version of the libs that are in the godot asset lib store.
 
