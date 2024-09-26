@@ -13,6 +13,7 @@ int SteamPeerConfig::size() const {
 SteamNetworkingConfigValue_t *SteamPeerConfig::get_convert_options() const {
 	int options_size = options.size();
 	SteamNetworkingConfigValue_t *option_array = new SteamNetworkingConfigValue_t[options_size];
+
 	if (options_size > 0) {
 		for (int i = 0; i < options_size; i++) {
 			SteamNetworkingConfigValue_t this_option;

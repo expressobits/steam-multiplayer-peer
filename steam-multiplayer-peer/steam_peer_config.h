@@ -1,7 +1,7 @@
 #ifndef STEAM_PEER_CONFIG
 #define STEAM_PEER_CONFIG
 
-#include "steam/steam_api.h"
+#include "steam/steam_api_flat.h"
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 
@@ -88,7 +88,9 @@ public:
 		NETWORKING_CONFIG_ECN = k_ESteamNetworkingConfig_ECN,
 		NETWORKING_CONFIG_VALUE_FORCE32BIT = k_ESteamNetworkingConfigValue__Force32Bit
 	};
+
 	SteamPeerConfig() {}
+
 	Dictionary get_options() const;
 	int size() const;
 	SteamNetworkingConfigValue_t *get_convert_options() const;
