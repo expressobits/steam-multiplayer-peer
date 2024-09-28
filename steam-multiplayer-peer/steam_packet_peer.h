@@ -2,7 +2,7 @@
 #define STEAM_PACKET_PEER_H
 
 
-#include "steam/steam_api.h"
+#include "steam/steam_api_flat.h"
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 
@@ -27,14 +27,19 @@ public:
 		SEND_RELIABLE_NO_NAGLE = k_nSteamNetworkingSend_ReliableNoNagle,
 		SEND_USE_CURRENT_THREAD = k_nSteamNetworkingSend_UseCurrentThread,
 		SEND_AUTORESTART_BROKEN_SESSION = k_nSteamNetworkingSend_AutoRestartBrokenSession
-	}
+	};
 
 	uint8_t data[MAX_STEAM_PACKET_SIZE];
 	uint32_t size = 0;
 	uint64_t sender;
-	int transfer_mode = SteamNetworkingSend.SEND_RELIABLE;
+	int transfer_mode = SEND_RELIABLE;
 	SteamPacketPeer() {}
 	SteamPacketPeer(const void *p_buffer, uint32_t p_buffer_size, int transferMode);
+
+
+protected:
+	static void _bind_methods();
+};
 
 
 #endif // STEAM_PACKET_PEER_H
