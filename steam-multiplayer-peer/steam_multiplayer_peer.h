@@ -6,7 +6,7 @@
 
 // Include Steamworks API headers
 #include "map"
-#include "steam/steam_api_flat.h"
+#include "steam/steam_api.h"
 #include "steam/steamnetworkingfakeip.h"
 #include "steam_connection.h"
 #include "steam_peer_config.h"
