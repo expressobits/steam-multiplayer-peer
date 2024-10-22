@@ -181,7 +181,7 @@ public:
 	void _process_message(const SteamNetworkingMessage_t *msg);
 	void _process_ping(const SteamNetworkingMessage_t *msg);
 
-	uint64_t get_steam64_from_peer_id(const uint32_t peer) const; //Steam64 is a Steam ID
+	uint64_t get_steam64_from_peer_id(const uint32_t peer_id) const; //Steam64 is a Steam ID
 	int get_peer_id_from_steam64(uint64_t steamid);
 	void set_steam_id_peer(uint64_t steam_id, int peer_id);
 
