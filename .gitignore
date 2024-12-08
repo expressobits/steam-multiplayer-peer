@@ -15,3 +15,4 @@ steam-multiplayer-peer/sdk/public
 steam-multiplayer-peer/sdk/redistributable_bin
 compile_commands.json
 run.bat
+src/gen
