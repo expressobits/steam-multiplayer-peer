@@ -33,7 +33,7 @@ public:
 	uint32_t size = 0;
 	uint64_t sender;
 	int transfer_mode = SEND_RELIABLE;
-	SteamPacketPeer() {}
+	SteamPacketPeer();
 	SteamPacketPeer(const void *p_buffer, uint32_t p_buffer_size, int transferMode);
 
 
