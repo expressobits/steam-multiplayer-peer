@@ -143,7 +143,7 @@ public:
 		NETWORKING_CONFIG_ECN = k_ESteamNetworkingConfig_ECN,
 		NETWORKING_CONFIG_VALUE_FORCE32BIT = k_ESteamNetworkingConfigValue__Force32Bit
 	};
-	
+
 	SteamMultiplayerPeer();
 	~SteamMultiplayerPeer();
 	Error _get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) override;

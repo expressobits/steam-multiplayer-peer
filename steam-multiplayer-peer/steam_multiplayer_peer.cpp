@@ -286,7 +286,6 @@ void SteamMultiplayerPeer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("clear_config", "config"), &SteamMultiplayerPeer::clear_config);
 	ClassDB::bind_method(D_METHOD("clear_all_configs"), &SteamMultiplayerPeer::clear_all_configs);
 
-
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "listen_socket"), "set_listen_socket", "get_listen_socket");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "no_nagle"), "set_no_nagle", "get_no_nagle");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "no_delay"), "set_no_delay", "get_no_delay");
@@ -295,7 +294,6 @@ void SteamMultiplayerPeer::_bind_methods() {
 
 	// NETWORKING SOCKETS SIGNALS ///////////////
 	ADD_SIGNAL(MethodInfo("network_connection_status_changed", PropertyInfo(Variant::INT, "connect_handle"), PropertyInfo(Variant::DICTIONARY, "connection"), PropertyInfo(Variant::INT, "old_state")));
-
 }
 
 const int SteamMultiplayerPeer::_get_steam_transfer_flag() {

@@ -1,6 +1,7 @@
-#include <godot_cpp/core/class_db.hpp>
 #include "steam_peer_config.h"
+#include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+
 
 Dictionary SteamPeerConfig::get_options() const {
 	return options;

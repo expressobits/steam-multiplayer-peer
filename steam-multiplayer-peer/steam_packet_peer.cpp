@@ -1,6 +1,5 @@
 #include "steam_packet_peer.h"
 
-
 void SteamPacketPeer::_bind_methods() {
 }
 

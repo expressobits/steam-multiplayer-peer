@@ -7,12 +7,10 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
-
-#include "steam_peer_config.h"
 #include "steam_connection.h"
 #include "steam_multiplayer_peer.h"
 #include "steam_packet_peer.h"
-
+#include "steam_peer_config.h"
 
 using namespace godot;
 
