@@ -460,7 +460,7 @@ uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(const uint32_t peer_id) 
 		return -1;
 }
 
-int SteamMultiplayerPeer::get_peer_id_from_steam64(uint64_t steamid) {
+uint32_t SteamMultiplayerPeer::get_peer_id_from_steam64(const uint64_t steamid) const {
 	if (steamid == SteamUser()->GetSteamID().ConvertToUint64()) {
 		return this->unique_id;
 	} else if (connections_by_steamId64.has(steamid)) {
