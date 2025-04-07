@@ -189,11 +189,15 @@ func _on_lobby_joined(lobby: int, permissions: int, locked: bool, response: int)
 
 func create_socket():
 	peer = SteamMultiplayerPeer.new()
+	# Example of peer config
+	#peer.set_config(SteamPeerConfig.NETWORKING_CONFIG_SEND_BUFFER_SIZE, 524288)
 	peer.create_host(0)
 	multiplayer.set_multiplayer_peer(peer)
 
 
 func connect_socket(steam_id : int):
 	peer = SteamMultiplayerPeer.new()
+	# Example of peer config
+	# peer.set_config(SteamPeerConfig.NETWORKING_CONFIG_SEND_BUFFER_SIZE, 524288)
 	peer.create_client(steam_id, 0)
 	multiplayer.set_multiplayer_peer(peer)
