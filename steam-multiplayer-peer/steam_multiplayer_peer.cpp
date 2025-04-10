@@ -13,7 +13,7 @@ SteamMultiplayerPeer::SteamMultiplayerPeer() :
 
 SteamMultiplayerPeer::~SteamMultiplayerPeer() {
 	if (_is_active()) {
-		close();
+		_close();
 	}
 	// memdelete(*config);
 }
