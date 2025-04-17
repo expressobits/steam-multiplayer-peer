@@ -47,7 +47,7 @@ Thank you Michael!
 ## Known issues
 
 ⚠️ No channel support currently
-It's been concluded that it's a limitation of the socket system, I'll take it out of the plan for now. See issue #2 (https://github.com/expressobits/steam-multiplayer-peer/issues/2)
+It's been concluded that it's a limitation of the socket system, I'll take it out of the plan for now. See issue (https://github.com/expressobits/steam-multiplayer-peer/issues/2)
 
 ## In Progress
 
