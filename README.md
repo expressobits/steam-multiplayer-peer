@@ -46,8 +46,8 @@ Thank you Michael!
 
 ## Known issues
 
-⚠️ Features No channel support currently
-At some point I intend to integrate channels to be used in rpcs commands, but currently it is only necessary to use channel 0 or the default rpcs.
+⚠️ No channel support currently
+It's been concluded that it's a limitation of the socket system, I'll take it out of the plan for now. See issue #2 (https://github.com/expressobits/steam-multiplayer-peer/issues/2)
 
 ## In Progress
 
