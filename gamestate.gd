@@ -176,8 +176,8 @@ func _ready():
 	multiplayer.connected_to_server.connect(self._connected_ok)
 	multiplayer.connection_failed.connect(self._connected_fail)
 	multiplayer.server_disconnected.connect(self._server_disconnected)
-	Steam.lobby_joined.connect(_on_lobby_joined.bind())
-	Steam.lobby_created.connect(_on_lobby_created.bind())
+	Steam.lobby_joined.connect(_on_lobby_joined)
+	Steam.lobby_created.connect(_on_lobby_created)
 
 
 func _on_lobby_created(_connect: int, _lobby_id: int):
@@ -201,14 +201,14 @@ func _on_lobby_joined(lobby: int, permissions: int, locked: bool, response: int)
 		# Get the failure reason
 		var FAIL_REASON: String
 		match response:
-			2:  FAIL_REASON = "This lobby no longer exists."
-			3:  FAIL_REASON = "You don't have permission to join this lobby."
-			4:  FAIL_REASON = "The lobby is now full."
-			5:  FAIL_REASON = "Uh... something unexpected happened!"
-			6:  FAIL_REASON = "You are banned from this lobby."
-			7:  FAIL_REASON = "You cannot join due to having a limited account."
-			8:  FAIL_REASON = "This lobby is locked or disabled."
-			9:  FAIL_REASON = "This lobby is community locked."
+			2: FAIL_REASON = "This lobby no longer exists."
+			3: FAIL_REASON = "You don't have permission to join this lobby."
+			4: FAIL_REASON = "The lobby is now full."
+			5: FAIL_REASON = "Uh... something unexpected happened!"
+			6: FAIL_REASON = "You are banned from this lobby."
+			7: FAIL_REASON = "You cannot join due to having a limited account."
+			8: FAIL_REASON = "This lobby is locked or disabled."
+			9: FAIL_REASON = "This lobby is community locked."
 			10: FAIL_REASON = "A user in the lobby has blocked you from joining."
 			11: FAIL_REASON = "A user you have blocked is in the lobby."
 		print(FAIL_REASON)
