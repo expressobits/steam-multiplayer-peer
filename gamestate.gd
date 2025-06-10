@@ -25,6 +25,7 @@ signal connection_failed()
 signal connection_succeeded()
 signal game_ended()
 signal game_error(what)
+signal name_update(new_name)
 
 
 func _process(delta):
@@ -166,11 +167,8 @@ func _ready():
 	print("_ready")
 	var initialize_response: Dictionary = Steam.steamInitEx()
 	print("Did Steam initialize?: %s " % initialize_response)
-	var steam_id = Steam.getSteamID()
-	var steam_username = Steam.getPersonaName()
-	print(steam_username)
-	print(steam_id)
 	
+
 	multiplayer.peer_connected.connect(self._player_connected)
 	multiplayer.peer_disconnected.connect(self._player_disconnected)
 	multiplayer.connected_to_server.connect(self._connected_ok)
@@ -178,6 +176,10 @@ func _ready():
 	multiplayer.server_disconnected.connect(self._server_disconnected)
 	Steam.lobby_joined.connect(_on_lobby_joined)
 	Steam.lobby_created.connect(_on_lobby_created)
+	await get_tree().process_frame
+	var steam_username = Steam.getPersonaName()
+	if steam_username:
+		name_update.emit(steam_username)
 
 
 func _on_lobby_created(_connect: int, _lobby_id: int):

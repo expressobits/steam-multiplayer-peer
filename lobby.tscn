@@ -79,7 +79,6 @@ offset_bottom = 407.5
 text = "Find your public IP address"
 
 [node name="Copy" type="Button" parent="Players"]
-visible = false
 layout_mode = 0
 offset_left = 385.0
 offset_top = 390.5

@@ -13,6 +13,7 @@ func _ready():
 	else:
 		var desktop_path = OS.get_system_dir(0).replace("\\", "/").split("/")
 		$Connect/Name.text = desktop_path[desktop_path.size() - 2]
+	gamestate.name_update.connect(func(name): $Connect/Name.text = name)
 
 
 func _on_host_pressed():
