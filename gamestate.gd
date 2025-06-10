@@ -33,12 +33,14 @@ func _process(delta):
 
 # Callback from SceneTree.
 func _player_connected(id):
+	print("_player_connected")
 	# Registration of a client beings here, tell the connected player that we are here.
 	register_player.rpc_id(id, player_name)
 
 
 # Callback from SceneTree.
 func _player_disconnected(id):
+	print("_player_disconnected")
 	if has_node("/root/World"): # Game is in progress.
 		if multiplayer.is_server():
 			game_error.emit("Player " + players[id] + " disconnected")
@@ -50,18 +52,21 @@ func _player_disconnected(id):
 
 # Callback from SceneTree, only for clients (not server).
 func _connected_ok():
+	print("_connected_ok")
 	# We just connected to a server
 	connection_succeeded.emit()
 
 
 # Callback from SceneTree, only for clients (not server).
 func _server_disconnected():
+	print("_server_disconnected")
 	game_error.emit("Server disconnected")
 	end_game()
 
 
 # Callback from SceneTree, only for clients (not server).
 func _connected_fail():
+	print("_connected_fail")
 	multiplayer.set_network_peer(null) # Remove peer
 	connection_failed.emit()
 
@@ -69,18 +74,21 @@ func _connected_fail():
 # Lobby management functions.
 @rpc("any_peer")
 func register_player(new_player_name):
+	print("register_player")
 	var id = multiplayer.get_remote_sender_id()
 	players[id] = new_player_name
 	player_list_changed.emit()
 
 
 func unregister_player(id):
+	print("unregister_player")
 	players.erase(id)
 	player_list_changed.emit()
 
 
 @rpc("call_local")
 func load_world():
+	print("load_world")
 	# Change scene.
 	var world = load("res://world.tscn").instantiate()
 	get_tree().get_root().add_child(world)
@@ -94,24 +102,29 @@ func load_world():
 
 
 func host_game(new_player_name):
+	print("host_game", new_player_name)
 	player_name = new_player_name
 	Steam.createLobby(Steam.LOBBY_TYPE_PUBLIC, MAX_PEERS)
 
 
 func join_game(lobby_id, new_player_name):
+	print("join_game", lobby_id, new_player_name)
 	player_name = new_player_name
 	Steam.joinLobby(int(lobby_id))
 
 
 func get_player_list():
+	print("get_player_list")
 	return players.values()
 
 
 func get_player_name():
+	print("get_player_name")
 	return player_name
 
 
 func begin_game():
+	print("begin_game")
 	assert(multiplayer.is_server())
 	load_world.rpc()
 
@@ -136,6 +149,7 @@ func begin_game():
 
 
 func end_game():
+	print("end_game")
 	if has_node("/root/World"): # Game is in progress.
 		# End it
 		get_node("/root/World").queue_free()
@@ -156,16 +170,18 @@ func _ready():
 
 
 func _on_lobby_created(_connect: int, _lobby_id: int):
+	print("_on_lobby_created", _connect)
 	if _connect == 1:
 		lobby_id = _lobby_id
 		Steam.setLobbyData(_lobby_id, "name", "test_server")
 		create_socket()
-		print("Create lobby id:",str(lobby_id))
+		print("Create lobby id:", str(lobby_id))
 	else:
 		print("Error on create lobby!")
 
 
 func _on_lobby_joined(lobby: int, permissions: int, locked: bool, response: int):
+	print("_on_lobby_joined")
 	if response == 1:
 		var id = Steam.getLobbyOwner(lobby)
 		if id != Steam.getSteamID():
@@ -188,6 +204,7 @@ func _on_lobby_joined(lobby: int, permissions: int, locked: bool, response: int)
 
 
 func create_socket():
+	print("create_socket")
 	peer = SteamMultiplayerPeer.new()
 	# Example of peer config
 	#peer.set_config(SteamPeerConfig.NETWORKING_CONFIG_SEND_BUFFER_SIZE, 524288)
@@ -195,7 +212,8 @@ func create_socket():
 	multiplayer.set_multiplayer_peer(peer)
 
 
-func connect_socket(steam_id : int):
+func connect_socket(steam_id: int):
+	print("connect_socket")
 	peer = SteamMultiplayerPeer.new()
 	# Example of peer config
 	# peer.set_config(SteamPeerConfig.NETWORKING_CONFIG_SEND_BUFFER_SIZE, 524288)
