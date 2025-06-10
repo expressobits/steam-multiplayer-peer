@@ -157,9 +157,20 @@ func end_game():
 	game_ended.emit()
 	players.clear()
 
+func _init():
+	print("_init")
+	OS.set_environment("SteamAppId", str(480))
+	OS.set_environment("SteamGameId", str(480))
 
 func _ready():
-	Steam.steamInit(480)
+	print("_ready")
+	var initialize_response: Dictionary = Steam.steamInitEx()
+	print("Did Steam initialize?: %s " % initialize_response)
+	var steam_id = Steam.getSteamID()
+	var steam_username = Steam.getPersonaName()
+	print(steam_username)
+	print(steam_id)
+	
 	multiplayer.peer_connected.connect(self._player_connected)
 	multiplayer.peer_disconnected.connect(self._player_disconnected)
 	multiplayer.connected_to_server.connect(self._connected_ok)
