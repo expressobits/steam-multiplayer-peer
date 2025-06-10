@@ -83,5 +83,9 @@ func refresh_lobby():
 	await get_tree().create_timer(1).timeout
 	$Players/FindPublicIP.text = str(gamestate.lobby_id)
 
+
 func _on_start_pressed():
 	gamestate.begin_game()
+
+func copy_lobby_id():
+	DisplayServer.clipboard_set(str(gamestate.lobby_id))

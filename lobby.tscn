@@ -78,6 +78,15 @@ offset_right = 341.0
 offset_bottom = 407.5
 text = "Find your public IP address"
 
+[node name="Copy" type="Button" parent="Players"]
+visible = false
+layout_mode = 0
+offset_left = 385.0
+offset_top = 390.5
+offset_right = 432.0
+offset_bottom = 421.5
+text = "Copy"
+
 [node name="Connect" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 8
@@ -168,5 +177,6 @@ theme_override_colors/font_color = Color(0.820312, 0.291595, 0.291595, 1)
 [node name="ErrorDialog" type="AcceptDialog" parent="."]
 
 [connection signal="pressed" from="Players/Start" to="." method="_on_start_pressed"]
+[connection signal="pressed" from="Players/Copy" to="." method="copy_lobby_id"]
 [connection signal="pressed" from="Connect/Host" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="Connect/Join" to="." method="_on_join_pressed"]
