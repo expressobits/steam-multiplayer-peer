@@ -158,14 +158,10 @@ func end_game():
 	game_ended.emit()
 	players.clear()
 
-func _init():
-	print("_init")
-	OS.set_environment("SteamAppId", str(480))
-	OS.set_environment("SteamGameId", str(480))
 
 func _ready():
 	print("_ready")
-	var initialize_response: Dictionary = Steam.steamInitEx()
+	var initialize_response: Dictionary = Steam.steamInitEx(true, 480)
 	print("Did Steam initialize?: %s " % initialize_response)
 	
 
