@@ -13,6 +13,7 @@ func _ready():
 	else:
 		var desktop_path = OS.get_system_dir(0).replace("\\", "/").split("/")
 		$Connect/Name.text = desktop_path[desktop_path.size() - 2]
+	gamestate.name_update.connect(func(name): $Connect/Name.text = name)
 
 
 func _on_host_pressed():
@@ -83,5 +84,9 @@ func refresh_lobby():
 	await get_tree().create_timer(1).timeout
 	$Players/FindPublicIP.text = str(gamestate.lobby_id)
 
+
 func _on_start_pressed():
 	gamestate.begin_game()
+
+func copy_lobby_id():
+	DisplayServer.clipboard_set(str(gamestate.lobby_id))
