@@ -9,7 +9,6 @@
 #include "steam/steam_api_flat.h"
 #include "steam/steamnetworkingfakeip.h"
 #include "steam_connection.h"
-#include "steam_peer_config.h"
 
 using namespace godot;
 
@@ -33,7 +32,8 @@ private:
 	bool no_nagle = false;
 	bool no_delay = false;
 	// bool as_relay = false;
-	Ref<SteamPeerConfig> configs;
+	Dictionary options;
+	SteamNetworkingConfigValue_t *option_array;
 
 protected:
 	static void _bind_methods();
@@ -71,7 +71,6 @@ public:
 		CONNECTION_STATE_FORCE_32BIT = k_ESteamNetworkingConnectionState__Force32Bit
 	};
 
-	// Networking Sockets enums
 	enum SteamNetworkingConfig {
 		NETWORKING_CONFIG_INVALID = k_ESteamNetworkingConfig_Invalid,
 		NETWORKING_CONFIG_FAKE_PACKET_LOSS_SEND = k_ESteamNetworkingConfig_FakePacketLoss_Send,
@@ -102,6 +101,7 @@ public:
 		NETWORKING_CONFIG_SEND_RATE_MAX = k_ESteamNetworkingConfig_SendRateMax,
 		NETWORKING_CONFIG_NAGLE_TIME = k_ESteamNetworkingConfig_NagleTime,
 		NETWORKING_CONFIG_IP_ALLOW_WITHOUT_AUTH = k_ESteamNetworkingConfig_IP_AllowWithoutAuth,
+		NETWORKING_CONFIG_IP_LOCAL_HOST_ALLOW_WITHOUT_AUTH = k_ESteamNetworkingConfig_IPLocalHost_AllowWithoutAuth,
 		NETWORKING_CONFIG_MTU_PACKET_SIZE = k_ESteamNetworkingConfig_MTU_PacketSize,
 		NETWORKING_CONFIG_MTU_DATA_SIZE = k_ESteamNetworkingConfig_MTU_DataSize,
 		NETWORKING_CONFIG_UNENCRYPTED = k_ESteamNetworkingConfig_Unencrypted,
@@ -200,11 +200,13 @@ public:
 	// void set_as_relay(const bool new_as_relay);
 	// bool get_as_relay() const;
 	/// Configs
-	void set_configs(const Ref<SteamPeerConfig> new_config);
-	Ref<SteamPeerConfig> get_configs() const;
-	void set_config(const SteamPeerConfig::SteamNetworkingConfig config, Variant value);
-	void clear_config(const SteamPeerConfig::SteamNetworkingConfig config);
+	Dictionary get_options() const;
+	SteamNetworkingConfigValue_t *get_convert_options() const;
+	void set_options(const Dictionary new_options);
+	void set_config(const SteamNetworkingConfig config, Variant value);
+	void clear_config(const SteamNetworkingConfig config);
 	void clear_all_configs();
+
 
 private:
 	HashMap<uint64_t, Ref<SteamConnection>> connections_by_steamId64;
@@ -220,5 +222,7 @@ private:
 	// Networking Sockets callbacks /////////
 	STEAM_CALLBACK(SteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
 };
+
+VARIANT_ENUM_CAST(SteamMultiplayerPeer::SteamNetworkingConfig);
 
 #endif // STEAM_MULTIPLAYER_PEER_H
