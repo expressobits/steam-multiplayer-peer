@@ -161,6 +161,9 @@ void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
 	ERR_FAIL_COND_MSG(!_is_active(), "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_MSG(!peerId_to_steamId.has(p_peer), "'PeerConnection' not registered for steam_id. Try p_force true if need clear all multiplayer data.");
 	Ref<SteamConnection> connection = get_connection_by_peer(p_peer);
+	if (connection == nullptr) {
+		return;
+	}
 	bool result = connection->close();
 	if (!result) {
 		return;
@@ -170,12 +173,16 @@ void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
 	connections_by_steamId64.erase(connection->steam_id);
 	peerId_to_steamId.erase(p_peer);
 	if (active_mode == MODE_CLIENT || active_mode == MODE_SERVER) {
-		get_connection_by_peer(0)->flush();
+		Ref<SteamConnection> zero_connection = get_connection_by_peer(0);
+		if (zero_connection != nullptr) {
+			zero_connection->flush();
+		}
 	} else {
 		// TODO for MESH type
 		// ERR_FAIL_COND(!hosts.has(p_peer));
 		// hosts[p_peer]->flush();
 	}
+	emit_signal("peer_disconnected", p_peer);
 	if (p_force) {
 		//peers.erase(p_peer);
 		// if (hosts.has(p_peer)) {
