@@ -135,10 +135,10 @@ void SteamMultiplayerPeer::_close() {
 	if (connection_status != CONNECTION_CONNECTED) {
 		return;
 	}
-	_force_close();
+	force_close();
 }
 
-void SteamMultiplayerPeer::_force_close() {
+void SteamMultiplayerPeer::force_close() {
 	if (!_is_active()) {
 		return;
 	}
@@ -470,7 +470,7 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 				// Connection failed
 				// Need to update connection_status for the connection_failed signal to be fired
 				// by SceneMultiplayer, even if we never finished connecting.
-				_force_close();
+				force_close();
 			}
 		} else {
 			if (connections_by_steamId64.has(steam_id)) {
