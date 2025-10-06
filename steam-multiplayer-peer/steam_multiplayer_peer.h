@@ -163,6 +163,7 @@ public:
 	bool _is_server() const override;
 	void _poll() override;
 	void _close() override;
+	void _force_close();
 	void _disconnect_peer(int32_t p_peer, bool p_force) override;
 	int32_t _get_unique_id() const override;
 	// void _set_refuse_new_connections(bool p_enable) override;

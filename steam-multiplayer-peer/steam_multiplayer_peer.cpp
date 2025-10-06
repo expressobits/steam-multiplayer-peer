@@ -132,13 +132,16 @@ void SteamMultiplayerPeer::_poll() {
 }
 
 void SteamMultiplayerPeer::_close() {
-	if (!_is_active()) {
-		return;
-	}
 	if (connection_status != CONNECTION_CONNECTED) {
 		return;
 	}
+	_force_close();
+}
 
+void SteamMultiplayerPeer::_force_close() {
+	if (!_is_active()) {
+		return;
+	}
 	for (HashMap<uint64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
 		const Ref<SteamConnection> connection = E->value;
 		// TODO On Enet disconnect all peers with
@@ -462,8 +465,13 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 		if (!_is_server()) {
 			if (connection_status == CONNECTION_CONNECTED) {
 				emit_signal("peer_disconnected", 1);
+				close();
+			} else {
+				// Connection failed
+				// Need to update connection_status for the connection_failed signal to be fired
+				// by SceneMultiplayer, even if we never finished connecting.
+				_force_close();
 			}
-			close();
 		} else {
 			if (connections_by_steamId64.has(steam_id)) {
 				Ref<SteamConnection> connection = connections_by_steamId64[steam_id];
