@@ -129,6 +129,25 @@ void SteamMultiplayerPeer::_poll() {
 			}
 		}
 	}
+	if (active_mode == MODE_CLIENT && connection_status == CONNECTION_CONNECTED) {
+		// Check if we already know the host's Peer ID (host ID is always 1)
+		// If we don't have the host's Peer ID yet (host ID is always 1), the handshake is not complete
+        if (!peerId_to_steamId.has(1)) {
+            uint64_t current_time = Time::get_singleton()->get_ticks_msec();
+            
+			// Every 500 milliseconds, try to send my Peer ID to the host
+            if (current_time - last_handshake_time > 500) {
+                last_handshake_time = current_time;
+                
+                // Iterate through all connections (in client mode, there is usually only 1 connection, which is the one connecting to the host)
+                for (HashMap<uint64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
+                    // Resend my Peer ID to the host if we haven't heard from the host in a while
+                    // As long as the host receives any one of these, the connection will be established
+                    E->value->send_peer(unique_id);
+                }
+            }
+        }
+    }
 }
 
 void SteamMultiplayerPeer::_close() {
