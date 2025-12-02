@@ -405,6 +405,10 @@ const int SteamMultiplayerPeer::_get_steam_transfer_flag() {
 //! connection at the time the change occurred and the callback was posted. In
 //! particular, m_info.m_eState will have the new connection state.
 void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionStatusChangedCallback_t *call_data) {
+	if (!_is_active()) {
+		return;
+	}
+
 	// Connection handle.
 	uint64_t connect_handle = call_data->m_hConn;
 
