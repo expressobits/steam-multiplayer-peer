@@ -528,6 +528,8 @@ void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
 
 	Ref<SteamConnection> connection = connections_by_steamId64[steam_id];
 
+	ERR_FAIL_COND_MSG(connection->peer_id != -1 && connection->peer_id == unique_id, "Received SetupPeerPayload for self");
+
 	if (receive->peer_id != -1) {
 		if (connection->peer_id == -1) {
 			set_steam_id_peer(steam_id, receive->peer_id);
