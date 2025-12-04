@@ -405,6 +405,10 @@ const int SteamMultiplayerPeer::_get_steam_transfer_flag() {
 //! connection at the time the change occurred and the callback was posted. In
 //! particular, m_info.m_eState will have the new connection state.
 void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionStatusChangedCallback_t *call_data) {
+	if (!_is_active()) {
+		return;
+	}
+
 	// Connection handle.
 	uint64_t connect_handle = call_data->m_hConn;
 
@@ -523,6 +527,8 @@ void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
 	uint64_t steam_id = msg->m_identityPeer.GetSteamID64();
 
 	Ref<SteamConnection> connection = connections_by_steamId64[steam_id];
+
+	ERR_FAIL_COND_MSG(connection->peer_id != -1 && connection->peer_id == unique_id, "Received SetupPeerPayload for self");
 
 	if (receive->peer_id != -1) {
 		if (connection->peer_id == -1) {
