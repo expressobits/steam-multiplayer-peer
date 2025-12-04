@@ -3,6 +3,7 @@
 
 #include <godot_cpp/classes/multiplayer_peer_extension.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/classes/time.hpp>
 
 // Include Steamworks API headers
 #include "map"
@@ -18,6 +19,8 @@ class SteamMultiplayerPeer : public MultiplayerPeerExtension {
 	GDCLASS(SteamMultiplayerPeer, MultiplayerPeerExtension)
 
 private:
+	// Used to record the time of the last handshake packet sent
+    uint64_t last_handshake_time = 0;
 	enum Mode {
 		MODE_NONE,
 		MODE_SERVER,
