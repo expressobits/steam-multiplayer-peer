@@ -3,6 +3,11 @@
 [![Documentation](https://img.shields.io/badge/documentation-no-red.svg)](todo-doc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](MIT)
 
+⚠️⚠️⚠️⚠️ Update Dec 2025 ⚠️⚠️⚠️⚠️
+I have paused development on this plugin; please try using GodotSteam if possible.
+I encourage anyone to use a fork to continue development if necessary.
+⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
+
 Godot Asset Lib: https://godotengine.org/asset-library/asset/2258
 
 ## Branchs Map
